@@ -1,0 +1,198 @@
+/* ===== 布局系统 ===== */
+
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-height);
+    padding: 0 20px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-light);
+    flex-shrink: 0;
+    z-index: 100;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+}
+
+.logo svg { color: var(--bg-accent); }
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.app-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+}
+
+.page {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-light);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.sidebar-right {
+    width: var(--sidebar-right-width);
+    border-right: none;
+    border-left: 1px solid var(--border-light);
+}
+
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+.panel-group {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.canvas-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow: auto;
+    background: var(--bg-primary);
+}
+
+.canvas-wrapper {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-container {
+    width: 720px;
+    height: 480px;
+}
+
+/* 数据区域布局 */
+.data-area {
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 16px;
+}
+
+.data-area .data-editor {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.data-editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-light);
+    gap: 12px;
+}
+
+.data-editor-header .form-input {
+    max-width: 280px;
+}
+
+.data-editor-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.data-table-wrap {
+    flex: 1;
+    overflow: auto;
+    padding: 8px;
+}
+
+.data-hint {
+    padding: 8px 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-light);
+    margin: 0;
+}
+
+/* 底部 Dock */
+.app-dock {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: var(--dock-height);
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border-light);
+    flex-shrink: 0;
+    z-index: 100;
+}
+
+.dock-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    border-radius: var(--radius-lg);
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.dock-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.dock-item.active {
+    background: var(--bg-active);
+    color: var(--bg-accent);
+}
+
+/* 主图画布 */
+.main-canvas-area .canvas-wrapper {
+    padding: 0;
+    overflow: hidden;
+}
+
+#main-canvas { display: block; }
