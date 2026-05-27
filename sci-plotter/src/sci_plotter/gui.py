@@ -21,6 +21,7 @@ def get_assets_dir() -> Path:
 def run_gui(port: int = 0):
     """启动桌面 GUI"""
     import webview
+
     from sci_plotter.bridge import JSBridge
 
     assets_dir = get_assets_dir()

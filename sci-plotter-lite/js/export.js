@@ -59,7 +59,8 @@
                         }
                     });
                 }
-                alert('图文件加载成功');
+                HistoryManager?.clear();
+                Toast.success('图文件加载成功');
             } else {
                 importWorkspace(data);
                 SubfigureEditor?.updateTableSelect();
@@ -70,11 +71,12 @@
                 DataManager?.renderGrid();
                 Workbench?.updateSourceSelect();
                 MainFigureCanvas?.updateSnapshotList();
-                if (MainFigureCanvas) MainFigureCanvas.clearCanvas();
-                alert('工作区加载成功');
+                if (MainFigureCanvas) MainFigureCanvas.clearCanvas(false);
+                HistoryManager?.clear();
+                Toast.success('工作区加载成功');
             }
         } catch (err) {
-            alert('加载失败: ' + err.message);
+            Toast.error('加载失败: ' + err.message);
         }
     }
 
@@ -174,7 +176,7 @@
     // ===== 桌面版特有导出 =====
     async function exportAsPDF() {
         if (!SciPloterBridge.isDesktop) {
-            alert('⚠️ PDF 导出仅在桌面版可用');
+            Toast.warning('PDF 导出仅在桌面版可用');
             return;
         }
         const figureData = {
@@ -198,7 +200,7 @@
 
     async function exportAsVector(format) {
         if (!SciPloterBridge.isDesktop) {
-            alert('⚠️ ' + format.toUpperCase() + ' 导出仅在桌面版可用');
+            Toast.warning(format.toUpperCase() + ' 导出仅在桌面版可用');
             return;
         }
         const figureData = {
@@ -228,7 +230,7 @@
 
     function exportTableAsCSV(tableId) {
         const table = getTable(tableId);
-        if (!table) { alert('数据表不存在'); return; }
+        if (!table) { Toast.error('数据表不存在'); return; }
         let csv = table.headers.join(',') + '\n';
         table.rows.forEach(row => {
             csv += row.map(cell => {

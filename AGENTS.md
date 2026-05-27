@@ -1,6 +1,32 @@
 <!-- From: E:\dev_reops\SCI-Plotter\AGENTS.md -->
 # SCI-Plotter — Agent 开发指南
 
+## ⚠️ 环境管理规则（最高优先级）
+
+**本项目使用 pixi 作为唯一的环境管理工具。严禁使用全局 Python、pip、conda 或任何系统级 Python 命令。**
+
+所有 Python 相关命令必须通过 `pixi run` 执行：
+
+```bash
+# ✅ 正确
+pixi run test          # 运行 pytest
+pixi run lint          # 运行 ruff check
+pixi run format        # 运行 ruff format
+pixi run dev           # 启动开发模式
+pixi run python -c "..."  # 运行任意 Python 命令
+
+# ❌ 禁止
+python -m pytest       # 禁止直接调用 python
+pip install ...        # 禁止直接调用 pip
+conda ...              # 禁止使用 conda
+pytest ...             # 禁止直接调用 pytest
+ruff ...               # 禁止直接调用 ruff
+```
+
+**此规则适用于所有场景**，包括子代理（sub-agent）执行任务时。如果子代理需要使用 Python，必须通过 `pixi run` 前缀。
+
+---
+
 ## 项目概述
 
 SCI-Plotter 是一款面向科研人员的交互式绘图工具，采用**双架构方案**：
@@ -199,6 +225,8 @@ SCI-Plotter/
 
 ## 构建、运行与测试
 
+> **重要**：所有 Python 命令必须通过 `pixi run` 执行，禁止直接调用 python/pip/pytest/ruff。
+
 ### Lite 版（零构建）
 
 ```bash
@@ -207,39 +235,35 @@ cd sci-plotter-lite
 open index.html
 
 # 或启动本地静态服务器（推荐，避免部分浏览器 file:// 限制）
-python -m http.server 8080
+# 注意：这里用 Node.js 的 npx serve 或 pixi 内置 Python，不要直接调用全局 python
+npx serve -l 8080
 ```
 
 ### Desktop 版开发
 
 ```bash
-cd sci-plotter
-
-# 安装开发依赖（editable 模式）
-pip install -e ".[dev]"
+# pixi 自动管理依赖，无需手动 pip install
 
 # 同步前端资源（将 ../sci-plotter-lite/ 复制到 assets/）
-python scripts/sync_assets.py
+pixi run python sci-plotter/scripts/sync_assets.py
 
 # 以开发模式启动（直接引用外部 sci-plotter-lite 目录，无需同步）
-sci-plotter --dev
+pixi run dev
 
-# 或显式指定端口
-sci-plotter --dev --port 8080
+# 以开发模式启动并指定端口
+pixi run python -m sci_plotter --dev --port 8080
 
 # 启用调试模式（允许右键检查元素）
-sci-plotter --debug
+pixi run python -m sci_plotter --debug
 ```
 
 ### 测试
 
 - **前端**：当前**没有自动化测试套件**（无 Jest、Mocha、Playwright 等配置），依赖手动验证。
-- **Python**：使用 pytest。
+- **Python**：使用 pytest（通过 pixi）。
 
 ```bash
-cd sci-plotter
-pytest                    # 运行全部测试
-pytest --cov             # 带覆盖率
+pixi run test            # 运行全部测试（等价于 pytest sci-plotter/tests）
 ```
 
 Python 测试文件：
@@ -248,10 +272,15 @@ Python 测试文件：
 
 ### 代码检查
 
-Python 使用 ruff 进行 lint 与格式检查，配置见 `pyproject.toml`：
+Python 使用 ruff 进行 lint 与格式检查（通过 pixi），配置见 `pyproject.toml`：
 - `line-length = 100`
 - `target-version = "py310"`
 - lint select: `["E", "F", "W", "I"]`
+
+```bash
+pixi run lint            # ruff check
+pixi run format          # ruff format
+```
 
 ---
 

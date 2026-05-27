@@ -1,6 +1,5 @@
 """高级导出：matplotlib 矢量图、PDF 报告"""
 
-from pathlib import Path
 
 
 def export_as_vector(figure_data: dict, fmt: str, output_path: str):
@@ -52,7 +51,10 @@ def _draw_layer(ax, layer: dict):
         ax.add_patch(rect)
     elif ltype == "circle":
         from matplotlib.patches import Circle
-        circle = Circle((left + w / 2, top + h / 2), min(w, h) / 2, linewidth=1, edgecolor="black", facecolor="none")
+        circle = Circle(
+            (left + w / 2, top + h / 2), min(w, h) / 2,
+            linewidth=1, edgecolor="black", facecolor="none",
+        )
         ax.add_patch(circle)
 
 
@@ -68,7 +70,8 @@ def export_as_pdf(figure_data: dict, output_path: str):
     c.drawString(50, height - 50, "SCI-Plotter Report")
 
     c.setFont("Helvetica", 10)
-    c.drawString(50, height - 70, f"Canvas: {figure_data.get('width', 0)} x {figure_data.get('height', 0)}")
+    canvas_info = f"Canvas: {figure_data.get('width', 0)} x {figure_data.get('height', 0)}"
+    c.drawString(50, height - 70, canvas_info)
 
     c.showPage()
     c.save()

@@ -58,6 +58,15 @@
             ExportSystem?.exportAsImage();
         }
 
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+            e.preventDefault();
+            HistoryManager?.undo();
+        }
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+            e.preventDefault();
+            HistoryManager?.redo();
+        }
+
         const activeEl = document.activeElement;
         const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
 
@@ -65,20 +74,23 @@
             const c = AppState.mainfigure.fabricCanvas;
             const activeObj = c.getActiveObject();
             if (activeObj) {
-                // 如果是组合，需要删除组合内所有子对象
+                const before = MainFigureCanvas.captureCanvasState();
+
                 if (activeObj.type === 'group') {
                     activeObj.getObjects().forEach(child => c.remove(child));
                 }
                 c.remove(activeObj);
-                // 清理图层数组：删除该对象及其子对象对应的图层
                 const activeId = activeObj._sciLayerId;
                 AppState.mainfigure.layers = AppState.mainfigure.layers.filter(l => {
                     if (l.id === activeId) return false;
-                    // group 的子对象也绑定同一 layer id，一并清理
                     if (l.fabricObject && l.fabricObject._sciLayerId === activeId) return false;
                     return true;
                 });
                 c.requestRenderAll();
+
+                const after = MainFigureCanvas.captureCanvasState();
+                HistoryManager.push(HistoryManager.createAction('删除对象', function() { MainFigureCanvas.restoreCanvasState(before); }, function() { MainFigureCanvas.restoreCanvasState(after); }));
+
                 MainFigureCanvas?.updateLayerList();
             }
         }

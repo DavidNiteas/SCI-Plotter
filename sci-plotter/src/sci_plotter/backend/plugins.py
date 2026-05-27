@@ -4,7 +4,6 @@ import importlib.util
 import sys
 from pathlib import Path
 
-
 PLUGINS_DIR = Path.home() / ".sci-plotter" / "plugins"
 
 

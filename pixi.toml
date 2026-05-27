@@ -5,6 +5,8 @@ platforms = ["win-64"]
 
 [dependencies]
 python = ">=3.10"
+pytest = ">=7.0"
+ruff = ">=0.4"
 
 [pypi-dependencies]
 sci-plotter = { path = "sci-plotter", editable = true }

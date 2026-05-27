@@ -4,7 +4,6 @@
 """
 
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -76,6 +75,7 @@ class JSBridge:
     def analyze_data(self, table_data: dict, method: str, params: dict):
         """执行统计/数据分析"""
         import pandas as pd
+
         from sci_plotter.backend.analysis import run_analysis
 
         df = pd.DataFrame(table_data["rows"], columns=table_data["headers"])

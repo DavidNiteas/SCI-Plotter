@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+        "target": "es2020",
+        "module": "none",
+        "checkJs": false
+    },
+    "include": ["js/**/*.js", "css/**/*.css"]
+}

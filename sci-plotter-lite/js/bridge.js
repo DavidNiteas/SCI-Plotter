@@ -114,7 +114,7 @@ const SciPloterBridge = (function() {
         async analyze(data, method, params) {
             params = params || {};
             if (!isDesktop) {
-                alert('⚠️ 高级分析功能仅在桌面版可用\n请安装：pip install sci-plotter');
+                Toast.warning('高级分析功能仅在桌面版可用，请安装：pip install sci-plotter');
                 return null;
             }
             return await callApi('analyze_data', data, method, params);
@@ -122,7 +122,7 @@ const SciPloterBridge = (function() {
 
         async exportVector(figureData, format) {
             if (!isDesktop) {
-                alert('⚠️ ' + format.toUpperCase() + ' 导出仅在桌面版可用');
+                Toast.warning(format.toUpperCase() + ' 导出仅在桌面版可用');
                 return null;
             }
             return await callApi('export_vector', figureData, format);
@@ -130,7 +130,7 @@ const SciPloterBridge = (function() {
 
         async exportPDF(figureData) {
             if (!isDesktop) {
-                alert('⚠️ PDF 导出仅在桌面版可用');
+                Toast.warning('PDF 导出仅在桌面版可用');
                 return null;
             }
             return await callApi('export_pdf', figureData);
