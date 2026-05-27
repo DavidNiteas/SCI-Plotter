@@ -51,7 +51,18 @@ def run_gui(port: int = 0):
         min_size=(1000, 600),
         text_select=True,
     )
-    window.expose(bridge)
+    window.expose(
+        bridge.open_file_dialog,
+        bridge.save_file_dialog,
+        bridge.read_file,
+        bridge.write_file,
+        bridge.auto_save,
+        bridge.load_auto_save,
+        bridge.analyze_data,
+        bridge.export_vector,
+        bridge.export_pdf,
+        bridge.get_system_info,
+    )
 
     debug = bool(os.environ.get("SCI_PLOTTER_DEBUG"))
     webview.start(debug=debug)

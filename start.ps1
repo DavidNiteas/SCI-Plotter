@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # SCI-Plotter 一键启动脚本 (Windows)
 # 功能：检测/安装 Pixi → 检测/构建虚拟环境 → 检测/安装 sci-plotter → 启动 Desktop 应用
 
@@ -47,11 +47,9 @@ function Test-PixiInstalled {
 function Install-Pixi {
     Write-Warn "Pixi 未安装，正在自动下载安装..."
     try {
-        # 先尝试直接使用 irm | iex
         $installScript = Invoke-WebRequest -Uri $PixiInstallUrl -UseBasicParsing -TimeoutSec 60
         Invoke-Expression $installScript.Content
     } catch {
-        # 备用：下载到临时文件后执行
         $tmpFile = [System.IO.Path]::GetTempFileName() + ".ps1"
         try {
             Invoke-WebRequest -Uri $PixiInstallUrl -OutFile $tmpFile -UseBasicParsing -TimeoutSec 60
@@ -61,13 +59,11 @@ function Install-Pixi {
         }
     }
 
-    # 确保 pixi 可用
     if (-not (Test-Path $PixiExeFallback)) {
         Write-ErrorMsg "Pixi 自动安装失败，请手动安装后重试: https://pixi.sh"
         exit 1
     }
 
-    # 将 pixi 加入当前会话 PATH
     if (-not $env:PATH.Contains($PixiDir)) {
         $env:PATH = "$PixiDir;$env:PATH"
     }
@@ -111,8 +107,7 @@ function Start-SciPlotter {
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host ""
 
-    # pixi run 会调用 pyproject.toml 中定义的 sci-plotter 入口
-    & $PixiExe run sci-plotter --dev
+    & $PixiExe run dev
 }
 
 # ==================== 主流程 ====================
@@ -122,7 +117,6 @@ Write-Host "   SCI-Plotter 一键启动器" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# 1. 确保 Pixi 已安装
 if (Test-PixiInstalled) {
     Write-Success "Pixi 已安装"
 } else {
@@ -132,7 +126,6 @@ if (Test-PixiInstalled) {
 $PixiExe = Get-PixiExe
 Write-Info "Pixi 路径: $PixiExe"
 
-# 2. 确保虚拟环境存在且包含 sci-plotter
 if (-not (Test-EnvironmentExists)) {
     Write-Warn "虚拟环境不存在"
     Install-Environment -PixiExe $PixiExe
@@ -143,12 +136,10 @@ if (-not (Test-EnvironmentExists)) {
     Write-Success "虚拟环境已就绪，sci-plotter 已安装"
 }
 
-# 3. 验证 sci-plotter 命令可用
-$cliCheck = & $PixiExe run sci-plotter --help 2>$null | Out-String
+$cliCheck = & $PixiExe run python -m sci_plotter --help 2>&1 | Out-String
 if (-not $cliCheck.Contains("usage:")) {
     Write-Warn "正在修复 sci-plotter CLI 入口..."
     Install-Environment -PixiExe $PixiExe
 }
 
-# 4. 启动应用
 Start-SciPlotter -PixiExe $PixiExe

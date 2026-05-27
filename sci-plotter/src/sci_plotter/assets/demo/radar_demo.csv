@@ -1,0 +1,6 @@
+Material,Tensile_Strength,Hardness,Thermal_Conductivity,Corrosion_Resistance,Cost_Index
+Titanium_Alloy,82,75,45,90,35
+Stainless_Steel,68,80,55,72,65
+Carbon_Fiber,95,60,70,85,25
+Aluminum_Alloy,55,45,88,60,80
+Ceramic_SiC,40,95,30,95,40

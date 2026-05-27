@@ -1,0 +1,13 @@
+CellLine,Drug,Viability_Percent
+HeLa,Control,100.0
+HeLa,Cisplatin,45.2
+HeLa,Doxorubicin,38.7
+HeLa,Paclitaxel,52.3
+MCF7,Control,100.0
+MCF7,Cisplatin,62.8
+MCF7,Doxorubicin,41.5
+MCF7,Paclitaxel,55.1
+A549,Control,100.0
+A549,Cisplatin,71.3
+A549,Doxorubicin,58.9
+A549,Paclitaxel,63.4

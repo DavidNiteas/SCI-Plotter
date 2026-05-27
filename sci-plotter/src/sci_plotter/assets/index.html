@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/components.css">
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
     <div id="app">
@@ -22,6 +23,14 @@
                 <span>SCI-Plotter</span>
             </div>
             <div class="header-actions">
+                <div class="history-buttons">
+                    <button class="btn btn-sm btn-icon" id="btn-undo" disabled title="撤销 (Ctrl+Z)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    </button>
+                    <button class="btn btn-sm btn-icon" id="btn-redo" disabled title="重做 (Ctrl+Shift+Z)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>
+                    </button>
+                </div>
                 <button class="btn btn-sm" id="btn-save-workspace" title="保存工作区 (Ctrl+S)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                     保存工作区
@@ -63,6 +72,10 @@
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                                         导入 CSV
                                     </button>
+                                    <button class="btn btn-secondary" id="btn-import-xlsx">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        导入 Excel
+                                    </button>
                                     <button class="btn btn-secondary" id="btn-new-table">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                         新建空表
@@ -71,9 +84,17 @@
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                         导出当前表为 CSV
                                     </button>
+                                    <button class="btn btn-secondary" id="btn-export-table-xlsx">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                        导出当前表为 Excel
+                                    </button>
                                     <button class="btn btn-secondary" id="btn-export-all-json">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                                         导出全部表为 JSON
+                                    </button>
+                                    <button class="btn btn-secondary" id="btn-export-all-xlsx">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                        导出全部表为 Excel
                                     </button>
                                 </div>
                             </div>
@@ -90,6 +111,10 @@
                                 <button class="btn btn-sm" id="btn-add-col">+ 列</button>
                                 <button class="btn btn-sm btn-danger" id="btn-del-row">- 行</button>
                                 <button class="btn btn-sm btn-danger" id="btn-del-col">- 列</button>
+                                <button class="btn btn-sm btn-secondary" id="btn-find-replace" title="查找与替换 (Ctrl+F)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                    查找替换
+                                </button>
                             </div>
                         </div>
                         <div class="data-table-wrap">
@@ -98,7 +123,7 @@
                                 <tbody></tbody>
                             </table>
                         </div>
-                        <p class="data-hint">点击单元格直接编辑，按 Tab 切换，按 Enter 下一行</p>
+                        <p class="data-hint">点击选择 · 双击编辑 · 拖拽/Shift多选 · Ctrl+C/V/X 复制粘贴剪切 · 右键菜单 · Ctrl+F 查找替换 · 方向键导航 · Ctrl+A 全选 · Del 清除</p>
                     </div>
                 </div>
             </section>
@@ -124,6 +149,17 @@
                             <div class="panel-body">
                                 <div class="column-checklist" id="wb-column-list">
                                     <p class="empty-tip">先选择源表</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-title">数据过滤</span>
+                                <button class="btn btn-sm btn-secondary wb-filter-add-btn" id="btn-wb-add-filter" style="margin-left:auto;padding:2px 8px;font-size:12px">+ 条件</button>
+                            </div>
+                            <div class="panel-body">
+                                <div class="wb-filter-list" id="wb-filter-list">
+                                    <p class="empty-tip">无过滤条件</p>
                                 </div>
                             </div>
                         </div>
@@ -169,7 +205,57 @@
                     <div class="panel-group">
                         <div class="panel">
                             <div class="panel-header">
-                                <span class="panel-title">组合新列</span>
+                                <span class="panel-title">数据预处理</span>
+                            </div>
+                            <div class="panel-body">
+                                <div class="wb-preprocess-section">
+                                    <div class="wb-preprocess-subtitle">缺失值处理</div>
+                                    <div class="form-row">
+                                        <label>目标列（不选则全部列）</label>
+                                        <div class="wb-multi-select" id="wb-missing-cols"></div>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>处理方法</label>
+                                        <select class="form-select" id="wb-missing-method">
+                                            <option value="drop_rows">删除含缺失值的行</option>
+                                            <option value="fill_mean">填充为均值</option>
+                                            <option value="fill_median">填充为中位数</option>
+                                            <option value="fill_mode">填充为众数</option>
+                                            <option value="fill_fixed">填充为固定值</option>
+                                            <option value="fill_forward">前向填充</option>
+                                            <option value="fill_backward">后向填充</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-row" id="wb-missing-fixed-row" style="display:none">
+                                        <label>固定值</label>
+                                        <input type="number" class="form-input" id="wb-missing-fixed-val" step="any" placeholder="数值">
+                                    </div>
+                                    <button class="btn btn-secondary" id="btn-wb-apply-missing">应用缺失值处理</button>
+                                </div>
+                                <div class="wb-preprocess-section">
+                                    <div class="wb-preprocess-subtitle">数据标准化</div>
+                                    <div class="form-row">
+                                        <label>目标列（仅数值列）</label>
+                                        <div class="wb-multi-select" id="wb-norm-cols"></div>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>标准化方法</label>
+                                        <select class="form-select" id="wb-norm-method">
+                                            <option value="zscore">Z-score 标准化</option>
+                                            <option value="minmax">Min-Max 归一化 [0,1]</option>
+                                            <option value="maxabs">MaxAbs 标准化 [-1,1]</option>
+                                            <option value="robust">Robust 标准化 (中位数/IQR)</option>
+                                            <option value="decimal_scale">小数定标标准化</option>
+                                            <option value="log">Log 变换 (ln)</option>
+                                        </select>
+                                    </div>
+                                    <button class="btn btn-secondary" id="btn-wb-apply-norm">应用标准化</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-title">计算新列</span>
                             </div>
                             <div class="panel-body">
                                 <div class="form-row">
@@ -177,22 +263,15 @@
                                     <input type="text" class="form-input" id="wb-newcol-name" placeholder="例如: Ratio">
                                 </div>
                                 <div class="form-row">
-                                    <label>列 A</label>
-                                    <select class="form-select" id="wb-newcol-a"><option value="">选择...</option></select>
-                                </div>
-                                <div class="form-row">
-                                    <label>运算符</label>
-                                    <select class="form-select" id="wb-newcol-op">
-                                        <option value="+">+ (加)</option>
-                                        <option value="-">- (减)</option>
-                                        <option value="*">× (乘)</option>
-                                        <option value="/">÷ (除)</option>
+                                    <label>计算模式</label>
+                                    <select class="form-select" id="wb-newcol-mode">
+                                        <option value="arithmetic">双列运算</option>
+                                        <option value="function">单列函数</option>
+                                        <option value="transform">统计变换</option>
+                                        <option value="conditional">条件表达式</option>
                                     </select>
                                 </div>
-                                <div class="form-row">
-                                    <label>列 B</label>
-                                    <select class="form-select" id="wb-newcol-b"><option value="">选择...</option></select>
-                                </div>
+                                <div id="wb-newcol-params"></div>
                                 <button class="btn btn-secondary" id="btn-wb-add-col">添加计算列</button>
                             </div>
                         </div>
@@ -206,6 +285,58 @@
                                     <input type="text" class="form-input" id="wb-newtable-name" placeholder="例如: 处理后数据">
                                 </div>
                                 <button class="btn btn-accent" id="btn-wb-create-table">生成并保存</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-title">统计分析</span>
+                            </div>
+                            <div class="panel-body">
+                                <div class="form-row">
+                                    <label>分析方法</label>
+                                    <select class="form-select" id="wb-stat-method">
+                                        <option value="">选择方法...</option>
+                                        <option value="describe">描述性统计</option>
+                                        <option value="ttest">独立样本 t 检验</option>
+                                        <option value="mann_whitney">Mann-Whitney U 检验</option>
+                                        <option value="wilcoxon">Wilcoxon 符号秩检验</option>
+                                        <option value="anova">单因素方差分析</option>
+                                        <option value="kruskal">Kruskal-Wallis 检验</option>
+                                        <option value="chi_square">卡方独立性检验</option>
+                                        <option value="regression">简单线性回归</option>
+                                        <option value="multi_regression">多元线性回归</option>
+                                        <option value="correlation">相关矩阵</option>
+                                        <option value="normality">正态性检验</option>
+                                        <option value="outliers">异常值检测</option>
+                                    </select>
+                                </div>
+                                <div id="wb-stat-params"></div>
+                                <button class="btn btn-primary" id="btn-wb-run-stat">运行分析</button>
+                            </div>
+                        </div>
+                        <div class="panel" id="wb-stat-result-panel" style="display:none">
+                            <div class="panel-header">
+                                <span class="panel-title">分析结果</span>
+                                <div class="stat-view-toggle">
+                                    <button class="btn btn-sm btn-icon stat-view-btn active" data-view="table" title="表格视图">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                                    </button>
+                                    <button class="btn btn-sm btn-icon stat-view-btn" data-view="chart" title="图表视图">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div id="wb-stat-result" class="stat-result-area"></div>
+                                <div id="wb-stat-chart-wrap" class="stat-chart-wrap" style="display:none">
+                                    <div id="wb-stat-chart" class="stat-chart-container"></div>
+                                    <div class="stat-chart-actions">
+                                        <button class="btn btn-sm btn-secondary" id="btn-stat-chart-snapshot" title="将分析图表发送到子图暂存库">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                                            暂存图表
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -224,6 +355,163 @@
                                 <select class="form-select" id="sub-table-select">
                                     <option value="">选择数据表...</option>
                                 </select>
+                            </div>
+                        </div>
+                        <div class="panel" id="panel-column-mapping" style="display:none">
+                            <div class="panel-header">
+                                <span class="panel-title">数据列映射</span>
+                            </div>
+                            <div class="panel-body">
+                                <div class="form-row" id="mapping-row-x">
+                                    <label>X 轴</label>
+                                    <select class="form-select" id="sub-col-x">
+                                        <option value="">自动</option>
+                                    </select>
+                                </div>
+                                <div class="form-row" id="mapping-row-y">
+                                    <label>Y 轴</label>
+                                    <select class="form-select" id="sub-col-y">
+                                        <option value="">自动</option>
+                                    </select>
+                                </div>
+                                <div class="form-row" id="mapping-row-group">
+                                    <label>分组/分类</label>
+                                    <select class="form-select" id="sub-col-group">
+                                        <option value="">自动</option>
+                                    </select>
+                                </div>
+                                <div class="form-row" id="mapping-row-value">
+                                    <label>数值列</label>
+                                    <select class="form-select" id="sub-col-value">
+                                        <option value="">自动</option>
+                                    </select>
+                                </div>
+                                <p class="empty-tip" id="col-mapping-tip" style="display:none">请先选择数据表</p>
+                            </div>
+                        </div>
+                        <div class="panel" id="panel-error-bar" style="display:none">
+                            <div class="panel-header">
+                                <span class="panel-title">误差棒</span>
+                            </div>
+                            <div class="panel-body">
+                                <div class="form-row">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="error-bar-enabled">
+                                        <span>启用误差棒</span>
+                                    </label>
+                                </div>
+                                <div id="error-bar-controls" style="display:none">
+                                    <div class="form-row">
+                                        <label>误差类型</label>
+                                        <select class="form-select" id="error-bar-type">
+                                            <option value="column">数据列</option>
+                                            <option value="fixed">固定值</option>
+                                            <option value="percent">百分比</option>
+                                            <option value="std">标准差</option>
+                                        </select>
+                                    </div>
+                                    <div id="error-bar-column-controls">
+                                        <div class="form-row" id="mapping-row-yerr-plus">
+                                            <label>Y 正向误差列</label>
+                                            <select class="form-select" id="sub-col-yerr-plus">
+                                                <option value="">无</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-row" id="mapping-row-yerr-minus">
+                                            <label>Y 负向误差列</label>
+                                            <select class="form-select" id="sub-col-yerr-minus">
+                                                <option value="">无</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-row" id="mapping-row-xerr-plus">
+                                            <label>X 正向误差列</label>
+                                            <select class="form-select" id="sub-col-xerr-plus">
+                                                <option value="">无</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-row" id="mapping-row-xerr-minus">
+                                            <label>X 负向误差列</label>
+                                            <select class="form-select" id="sub-col-xerr-minus">
+                                                <option value="">无</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row" id="error-bar-fixed-row" style="display:none">
+                                        <label>固定误差值</label>
+                                        <input type="number" class="form-input" id="error-bar-fixed-value" value="0" min="0" step="0.1">
+                                    </div>
+                                    <div class="form-row" id="error-bar-percent-row" style="display:none">
+                                        <label>百分比误差 (%)</label>
+                                        <input type="number" class="form-input" id="error-bar-percent-value" value="5" min="0" max="100" step="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel" id="panel-trend-line" style="display:none">
+                            <div class="panel-header">
+                                <span class="panel-title">趋势线</span>
+                            </div>
+                            <div class="panel-body">
+                                <div class="form-row">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="trend-line-enabled">
+                                        <span>启用趋势线</span>
+                                    </label>
+                                </div>
+                                <div id="trend-line-controls" style="display:none">
+                                    <div class="form-row">
+                                        <label>拟合类型</label>
+                                        <select class="form-select" id="trend-line-type">
+                                            <option value="linear">线性 (y = ax + b)</option>
+                                            <option value="polynomial">多项式</option>
+                                            <option value="exponential">指数 (y = ae^bx)</option>
+                                            <option value="logarithmic">对数 (y = a·ln(x) + b)</option>
+                                            <option value="power">幂函数 (y = ax^b)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-row" id="trend-line-degree-row" style="display:none">
+                                        <label>多项式阶数</label>
+                                        <select class="form-select" id="trend-line-degree">
+                                            <option value="2">2 阶（二次）</option>
+                                            <option value="3">3 阶（三次）</option>
+                                            <option value="4">4 阶</option>
+                                            <option value="5">5 阶</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>线条颜色</label>
+                                        <input type="color" class="form-color" id="trend-line-color" value="#e74c3c">
+                                    </div>
+                                    <div class="form-row">
+                                        <label>线宽</label>
+                                        <select class="form-select" id="trend-line-width">
+                                            <option value="1">1px</option>
+                                            <option value="1.5">1.5px</option>
+                                            <option value="2" selected>2px</option>
+                                            <option value="3">3px</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>线型</label>
+                                        <select class="form-select" id="trend-line-style">
+                                            <option value="solid">实线</option>
+                                            <option value="dashed">虚线</option>
+                                            <option value="dotted">点线</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-row">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="trend-line-show-equation" checked>
+                                            <span>显示方程</span>
+                                        </label>
+                                    </div>
+                                    <div class="form-row">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="trend-line-show-r2" checked>
+                                            <span>显示 R²</span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="panel">
@@ -256,6 +544,54 @@
                                         <div class="template-icon">▒</div>
                                         <span>直方图</span>
                                     </button>
+                                    <button class="template-card" data-template="group_bar">
+                                        <div class="template-icon">▥</div>
+                                        <span>分组柱状图</span>
+                                    </button>
+                                    <button class="template-card" data-template="group_line">
+                                        <div class="template-icon">〰</div>
+                                        <span>分组折线图</span>
+                                    </button>
+                                    <button class="template-card" data-template="area">
+                                        <div class="template-icon">▓</div>
+                                        <span>面积图</span>
+                                    </button>
+                                    <button class="template-card" data-template="stacked_bar">
+                                        <div class="template-icon">▧</div>
+                                        <span>堆叠柱状图</span>
+                                    </button>
+                                    <button class="template-card" data-template="donut">
+                                        <div class="template-icon">◉</div>
+                                        <span>环形图</span>
+                                    </button>
+                                    <button class="template-card" data-template="radar">
+                                        <div class="template-icon">✦</div>
+                                        <span>雷达图</span>
+                                    </button>
+                                    <button class="template-card" data-template="bubble">
+                                        <div class="template-icon">◌</div>
+                                        <span>气泡图</span>
+                                    </button>
+                                    <button class="template-card" data-template="correlation_matrix">
+                                        <div class="template-icon">▩</div>
+                                        <span>相关矩阵</span>
+                                    </button>
+                                    <button class="template-card" data-template="violin">
+                                        <div class="template-icon">♪</div>
+                                        <span>小提琴图</span>
+                                    </button>
+                                    <button class="template-card" data-template="waterfall">
+                                        <div class="template-icon">⟟</div>
+                                        <span>瀑布图</span>
+                                    </button>
+                                    <button class="template-card" data-template="dumbbell">
+                                        <div class="template-icon">⊶</div>
+                                        <span>哑铃图</span>
+                                    </button>
+                                    <button class="template-card" data-template="parallel">
+                                        <div class="template-icon">≡</div>
+                                        <span>平行坐标</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -270,9 +606,17 @@
                                         <option value="academic">学术蓝</option>
                                         <option value="nature">Nature</option>
                                         <option value="science">Science</option>
+                                        <option value="cell">Cell</option>
+                                        <option value="lancet">Lancet</option>
+                                        <option value="jama">JAMA</option>
                                         <option value="viridis">Viridis</option>
+                                        <option value="seaborn">Seaborn</option>
+                                        <option value="tableau10">Tableau 10</option>
+                                        <option value="okabe_ito">Okabe-Ito (色盲友好)</option>
                                         <option value="warm">暖色</option>
                                         <option value="cool">冷色</option>
+                                        <option value="pastel">柔和色</option>
+                                        <option value="monochrome">黑白</option>
                                     </select>
                                 </div>
                                 <div class="form-row">
@@ -288,6 +632,96 @@
                                     <label>字号</label>
                                     <input type="range" class="form-range" id="font-size" min="10" max="24" value="14">
                                 </div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-title">坐标轴</span>
+                            </div>
+                            <div class="panel-body">
+                                <div class="form-row">
+                                    <label>图表标题</label>
+                                    <input type="text" class="form-input" id="axis-title" placeholder="输入图表标题">
+                                </div>
+                                <div class="form-row">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="axis-title-show" checked>
+                                        <span>显示标题</span>
+                                    </label>
+                                </div>
+                                <div class="form-row">
+                                    <label>标题位置</label>
+                                    <select class="form-select" id="axis-title-position">
+                                        <option value="center">居中</option>
+                                        <option value="left">左对齐</option>
+                                        <option value="right">右对齐</option>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <label>X 轴标签</label>
+                                    <input type="text" class="form-input" id="axis-x-label" placeholder="自定义 X 轴标签">
+                                </div>
+                                <div class="form-row">
+                                    <label>Y 轴标签</label>
+                                    <input type="text" class="form-input" id="axis-y-label" placeholder="自定义 Y 轴标签">
+                                </div>
+                                <div class="form-row form-row-inline">
+                                    <div class="form-row-half">
+                                        <label>X 最小值</label>
+                                        <input type="number" class="form-input" id="axis-x-min" placeholder="自动" step="any">
+                                    </div>
+                                    <div class="form-row-half">
+                                        <label>X 最大值</label>
+                                        <input type="number" class="form-input" id="axis-x-max" placeholder="自动" step="any">
+                                    </div>
+                                </div>
+                                <div class="form-row form-row-inline">
+                                    <div class="form-row-half">
+                                        <label>Y 最小值</label>
+                                        <input type="number" class="form-input" id="axis-y-min" placeholder="自动" step="any">
+                                    </div>
+                                    <div class="form-row-half">
+                                        <label>Y 最大值</label>
+                                        <input type="number" class="form-input" id="axis-y-max" placeholder="自动" step="any">
+                                    </div>
+                                </div>
+                                <div class="form-row form-row-inline">
+                                    <div class="form-row-half">
+                                        <label>X 轴刻度</label>
+                                        <select class="form-select" id="axis-x-scale">
+                                            <option value="value">线性</option>
+                                            <option value="log">对数</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-row-half">
+                                        <label>Y 轴刻度</label>
+                                        <select class="form-select" id="axis-y-scale">
+                                            <option value="value">线性</option>
+                                            <option value="log">对数</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="axis-show-grid" checked>
+                                        <span>显示网格线</span>
+                                    </label>
+                                </div>
+                                <div class="form-row form-row-inline">
+                                    <div class="form-row-half">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="axis-show-x-ticks" checked>
+                                            <span>X 刻度</span>
+                                        </label>
+                                    </div>
+                                    <div class="form-row-half">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="axis-show-y-ticks" checked>
+                                            <span>Y 刻度</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-secondary" id="btn-axis-reset">重置坐标轴</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -384,6 +818,10 @@
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                                         <span>箭头</span>
                                     </button>
+                                    <button class="tool-btn" data-tool="significance" title="显著性标注（点击两个位置）">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="18" x2="4" y2="8"/><line x1="4" y1="8" x2="20" y2="8"/><line x1="20" y1="18" x2="20" y2="8"/><text x="12" y="6" text-anchor="middle" font-size="8" fill="currentColor" stroke="none" font-weight="bold">*</text></svg>
+                                        <span>显著性</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -401,6 +839,24 @@
                             </div>
                             <div class="panel-body">
                                 <div class="form-row">
+                                    <label>期刊尺寸预设</label>
+                                    <select class="form-select" id="journal-preset">
+                                        <option value="custom">自定义</option>
+                                        <option value="nature-single">Nature 单栏 (89mm)</option>
+                                        <option value="nature-double">Nature 双栏 (183mm)</option>
+                                        <option value="science-single">Science 单栏 (57mm)</option>
+                                        <option value="science-double">Science 双栏 (120mm)</option>
+                                        <option value="plos-single">PLOS 单栏 (85mm)</option>
+                                        <option value="plos-double">PLOS 双栏 (178mm)</option>
+                                        <option value="ieee-single">IEEE 单栏 (89mm)</option>
+                                        <option value="ieee-double">IEEE 双栏 (184mm)</option>
+                                        <option value="elsevier-single">Elsevier 单栏 (90mm)</option>
+                                        <option value="elsevier-double">Elsevier 双栏 (190mm)</option>
+                                        <option value="acs-single">ACS 单栏 (83mm)</option>
+                                        <option value="acs-double">ACS 双栏 (178mm)</option>
+                                    </select>
+                                </div>
+                                <div class="form-row">
                                     <label>宽度 (px)</label>
                                     <input type="number" class="form-input" id="canvas-width" value="1200">
                                 </div>
@@ -412,6 +868,45 @@
                                     <label>背景色</label>
                                     <input type="color" class="form-color" id="canvas-bg" value="#ffffff">
                                 </div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-title">子图自动编号</span>
+                            </div>
+                            <div class="panel-body">
+                                <div class="form-row">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="auto-numbering" checked>
+                                        <span>启用自动编号</span>
+                                    </label>
+                                </div>
+                                <div class="form-row">
+                                    <label>编号格式</label>
+                                    <select class="form-select" id="numbering-format">
+                                        <option value="(a)">(a) (b) (c)</option>
+                                        <option value="a)">a) b) c)</option>
+                                        <option value="a.">a. b. c.</option>
+                                        <option value="(A)">(A) (B) (C)</option>
+                                        <option value="A)">A) B) C)</option>
+                                        <option value="(1)">(1) (2) (3)</option>
+                                        <option value="Fig.a">Fig.a Fig.b</option>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <label>字号</label>
+                                    <input type="number" class="form-input" id="numbering-fontsize" value="18" min="8" max="48">
+                                </div>
+                                <div class="form-row">
+                                    <label>位置</label>
+                                    <select class="form-select" id="numbering-position">
+                                        <option value="top-left">左上角</option>
+                                        <option value="top-right">右上角</option>
+                                        <option value="bottom-left">左下角</option>
+                                        <option value="bottom-right">右下角</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-secondary" id="btn-renumber">重新编号</button>
                             </div>
                         </div>
                         <div class="panel">
@@ -455,13 +950,41 @@
                 </aside>
 
                 <div class="canvas-area main-canvas-area">
-                    <div class="canvas-wrapper">
+                    <div class="canvas-zoom-toolbar" id="zoom-toolbar">
+                        <button class="btn btn-sm btn-icon" id="btn-zoom-out" title="缩小">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                        </button>
+                        <span class="zoom-level" id="zoom-level">100%</span>
+                        <button class="btn btn-sm btn-icon" id="btn-zoom-in" title="放大">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                        </button>
+                        <button class="btn btn-sm btn-icon" id="btn-zoom-reset" title="重置缩放">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3.51 9a9 9 0 0 1 14.85-3.36L21 8"/><path d="M21 3v5h-5"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L3 16"/><path d="M3 21v-5h5"/></svg>
+                        </button>
+                        <button class="btn btn-sm btn-icon" id="btn-zoom-fit" title="适应窗口">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                        </button>
+                        <span class="zoom-hint">滚轮缩放 · 空格+拖拽平移</span>
+                        <label class="snap-guide-toggle-label">
+                            <input type="checkbox" id="snap-guide-toggle" checked>
+                            <span>对齐参考线</span>
+                        </label>
+                    </div>
+                    <div class="canvas-wrapper" id="main-canvas-wrapper">
                         <canvas id="main-canvas"></canvas>
                     </div>
                 </div>
 
                 <aside class="sidebar sidebar-right">
                     <div class="panel-group">
+                        <div class="panel" id="panel-object-properties">
+                            <div class="panel-header">
+                                <span class="panel-title">对象属性</span>
+                            </div>
+                            <div class="panel-body" id="property-panel">
+                                <p class="empty-tip">选择对象以查看属性</p>
+                            </div>
+                        </div>
                         <div class="panel">
                             <div class="panel-header">
                                 <span class="panel-title">绘图工具</span>
@@ -578,8 +1101,12 @@
 
     <!-- 脚本 -->
     <script src="js/state.js"></script>
+    <script src="js/history.js"></script>
+    <script src="js/ui/toast.js"></script>
     <script src="js/bridge.js"></script>
+    <script src="js/analysis.js"></script>
     <script src="js/csv-parser.js"></script>
+    <script src="js/xlsx-handler.js"></script>
     <script src="js/color-schemes.js"></script>
     <script src="js/datamanage/manager.js"></script>
     <script src="js/datamanage/workbench.js"></script>
