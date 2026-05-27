@@ -1,0 +1,16 @@
+[workspace]
+name = "SCI-Plotter"
+channels = ["conda-forge"]
+platforms = ["win-64"]
+
+[dependencies]
+python = ">=3.10"
+
+[pypi-dependencies]
+sci-plotter = { path = "sci-plotter", editable = true }
+
+[tasks]
+dev = "sci-plotter --dev"
+test = "pytest sci-plotter/tests"
+lint = "ruff check sci-plotter/src sci-plotter/tests"
+format = "ruff format sci-plotter/src sci-plotter/tests"
