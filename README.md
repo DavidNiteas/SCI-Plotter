@@ -1,4 +1,4 @@
-# SCI-Ploter
+# SCI-Plotter
 
 > 面向科研人员的交互式绘图工具，提供 **Lite 浏览器版** 与 **Desktop 桌面版** 两种使用方式。
 
@@ -7,7 +7,7 @@
 | 版本 | 使用方式 | 特点 | 适用场景 |
 |------|---------|------|---------|
 | **Lite** 🌐 | 浏览器直接打开 | 零安装，即开即用，免维护 | 快速绘图、轻度使用、跨设备 |
-| **Desktop** 🖥️ | `pip install sci-ploter` | 本地文件系统、统计分析、矢量导出 | 深度使用、批量处理、高质量出版 |
+| **Desktop** 🖥️ | `pip install sci-plotter` | 本地文件系统、统计分析、矢量导出 | 深度使用、批量处理、高质量出版 |
 
 两套版本**共用同一套前端代码**，数据格式完全兼容。
 
@@ -49,7 +49,7 @@
 ### Lite 版 — 浏览器直接打开
 
 ```bash
-cd sci-ploter-lite
+cd sci-plotter-lite
 # 直接用浏览器打开 index.html
 # 或启动本地服务器
 python -m http.server 8080
@@ -59,16 +59,16 @@ python -m http.server 8080
 ### Desktop 版 — pip 安装
 
 ```bash
-pip install sci-ploter
-sci-ploter
+pip install sci-plotter
+sci-plotter
 ```
 
 开发模式（引用外部前端资源，无需重新构建）：
 
 ```bash
-cd sci-ploter
+cd sci-plotter
 pip install -e ".[dev]"
-sci-ploter --dev
+sci-plotter --dev
 ```
 
 ---
@@ -85,12 +85,12 @@ sci-ploter --dev
 ## 目录结构
 
 ```
-SCI-Ploter/
+SCI-Plotter/
 ├── index.html                    # 🚪 门户页：引导到 Lite 或 Desktop
 ├── README.md                     # 本文档
 ├── LICENSE                       # MIT
 ├── AGENTS.md                     # 项目约定
-├── sci-ploter-lite/              # 🌐 Lite 版本（纯前端）
+├── sci-plotter-lite/              # 🌐 Lite 版本（纯前端）
 │   ├── index.html                # SPA 入口
 │   ├── css/                      # 样式系统
 │   ├── js/                       # 前端模块
@@ -106,13 +106,13 @@ SCI-Ploter/
 │   │   └── mainfigure/           # 主图画布
 │   └── demo/                     # 6 组示例 CSV 数据
 │
-└── sci-ploter/                   # 🖥️ Desktop 版本（Python 包）
+└── sci-plotter/                   # 🖥️ Desktop 版本（Python 包）
     ├── pyproject.toml            # Hatchling 构建配置
     ├── README.md                 # Python 包文档
     ├── scripts/sync_assets.py    # 同步前端资源到 assets/
-    ├── src/sci_ploter/           # Python 包
+    ├── src/sci_plotter/           # Python 包
     │   ├── __init__.py
-    │   ├── __main__.py           # python -m sci_ploter
+    │   ├── __main__.py           # python -m sci_plotter
     │   ├── app.py                # CLI 入口
     │   ├── gui.py                # PyWebView 窗口
     │   ├── server.py             # 内置 HTTP 服务（开发模式）
