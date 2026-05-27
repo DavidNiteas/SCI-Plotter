@@ -51,7 +51,7 @@
                             if (layerData.snapshotId) {
                                 const snap = AppState.snapshots.find(s => s.id === layerData.snapshotId);
                                 if (snap) {
-                                    MainFigureCanvas.addImageObject(snap.thumbnail, layerData.name, layerData.left, layerData.top, snap.id);
+                                    MainFigureCanvas.addImageObject(snap.thumbnail, layerData.name, layerData.left, layerData.top, snap.id, layerData.subfigureData);
                                 }
                             }
                         });
@@ -60,6 +60,7 @@
                 } else {
                     importWorkspace(data);
                     SubfigureEditor?.updateTableSelect();
+                    SubfigureEditor?.applyAspectRatio();
                     SubfigureEditor?.refreshChart();
                     SubfigureEditor?.updateSnapshotList();
                     DataManager?.renderTableList();

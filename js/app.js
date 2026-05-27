@@ -52,8 +52,19 @@
             const c = AppState.mainfigure.fabricCanvas;
             const activeObj = c.getActiveObject();
             if (activeObj) {
+                // 如果是组合，需要删除组合内所有子对象
+                if (activeObj.type === 'group') {
+                    activeObj.getObjects().forEach(child => c.remove(child));
+                }
                 c.remove(activeObj);
-                AppState.mainfigure.layers = AppState.mainfigure.layers.filter(l => l.fabricObject !== activeObj);
+                // 清理图层数组：删除该对象及其子对象对应的图层
+                const activeId = activeObj._sciLayerId;
+                AppState.mainfigure.layers = AppState.mainfigure.layers.filter(l => {
+                    if (l.id === activeId) return false;
+                    // group 的子对象也绑定同一 layer id，一并清理
+                    if (l.fabricObject && l.fabricObject._sciLayerId === activeId) return false;
+                    return true;
+                });
                 c.requestRenderAll();
                 MainFigureCanvas?.updateLayerList();
             }

@@ -32,6 +32,9 @@ const AppState = {
         colorScheme: 'academic',
         fontFamily: 'Arial, sans-serif',
         fontSize: 14,
+        aspectRatio: '4:3',   // 子图比例: 4:3, 16:9, 1:1, 3:4, custom
+        customWidth: 600,
+        customHeight: 450,
     },
 
     // ===== 主图状态 =====
@@ -148,6 +151,9 @@ function exportWorkspace() {
             colorScheme: AppState.subfigure.colorScheme,
             fontFamily: AppState.subfigure.fontFamily,
             fontSize: AppState.subfigure.fontSize,
+            aspectRatio: AppState.subfigure.aspectRatio,
+            customWidth: AppState.subfigure.customWidth,
+            customHeight: AppState.subfigure.customHeight,
         },
         mainfigure: {
             width: AppState.mainfigure.width,
@@ -158,6 +164,7 @@ function exportWorkspace() {
                 type: l.type,
                 name: l.name,
                 snapshotId: l.snapshotId,
+                subfigureData: l.subfigureData,
                 left: l.fabricObject?.left,
                 top: l.fabricObject?.top,
                 scaleX: l.fabricObject?.scaleX,
@@ -207,6 +214,7 @@ function exportEditableFigure() {
             type: l.type,
             name: l.name,
             snapshotId: l.snapshotId,
+            subfigureData: l.subfigureData,
             left: l.fabricObject?.left,
             top: l.fabricObject?.top,
             scaleX: l.fabricObject?.scaleX,

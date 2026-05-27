@@ -17,6 +17,7 @@
 
         bindEvents();
         updateTableSelect();
+        applyAspectRatio();
         renderEmptyChart();
 
         window.addEventListener('resize', () => chartInstance?.resize());
@@ -57,6 +58,26 @@
             refreshChart();
         });
 
+        // 比例选择
+        const aspectSelect = document.getElementById('sub-aspect-ratio');
+        const customWRow = document.getElementById('sub-custom-size-row');
+        const customHRow = document.getElementById('sub-custom-height-row');
+        aspectSelect?.addEventListener('change', (e) => {
+            AppState.subfigure.aspectRatio = e.target.value;
+            const isCustom = e.target.value === 'custom';
+            if (customWRow) customWRow.style.display = isCustom ? 'block' : 'none';
+            if (customHRow) customHRow.style.display = isCustom ? 'block' : 'none';
+            applyAspectRatio();
+        });
+        document.getElementById('sub-custom-width')?.addEventListener('change', (e) => {
+            AppState.subfigure.customWidth = parseInt(e.target.value) || 600;
+            applyAspectRatio();
+        });
+        document.getElementById('sub-custom-height')?.addEventListener('change', (e) => {
+            AppState.subfigure.customHeight = parseInt(e.target.value) || 450;
+            applyAspectRatio();
+        });
+
         // 操作按钮
         document.getElementById('btn-snapshot-sub')?.addEventListener('click', createSubfigureSnapshot);
         document.getElementById('btn-stage-sub')?.addEventListener('click', stageToMain);
@@ -67,6 +88,24 @@
         if (!select) return;
         select.innerHTML = '<option value="">选择数据表...</option>' +
             AppState.tables.map(t => `<option value="${t.id}" ${t.id === AppState.subfigure.selectedTableId ? 'selected' : ''}>${t.name}</option>`).join('');
+    }
+
+    function applyAspectRatio() {
+        if (!chartDom) return;
+        const ratio = AppState.subfigure.aspectRatio;
+        let w, h;
+        switch (ratio) {
+            case '4:3': w = 600; h = 450; break;
+            case '16:9': w = 640; h = 360; break;
+            case '1:1': w = 500; h = 500; break;
+            case '3:4': w = 450; h = 600; break;
+            case 'custom':
+            default: w = AppState.subfigure.customWidth; h = AppState.subfigure.customHeight; break;
+        }
+        chartDom.style.width = w + 'px';
+        chartDom.style.height = h + 'px';
+        chartDom.style.margin = '0 auto';
+        chartInstance?.resize();
     }
 
     function renderEmptyChart() {
@@ -178,8 +217,17 @@
             case 'rect':
                 shape = { id, type: 'rect', x, y, width: 80, height: 50, fill: 'rgba(37,99,235,0.15)', stroke: '#2563eb', lineWidth: 2 };
                 break;
+            case 'roundedRect':
+                shape = { id, type: 'roundedRect', x, y, width: 80, height: 50, r: 8, fill: 'rgba(37,99,235,0.15)', stroke: '#2563eb', lineWidth: 2 };
+                break;
+            case 'ellipse':
+                shape = { id, type: 'ellipse', x, y, rx: 50, ry: 30, fill: 'rgba(37,99,235,0.15)', stroke: '#2563eb', lineWidth: 2 };
+                break;
             case 'circle':
                 shape = { id, type: 'circle', x, y, r: 30, fill: 'rgba(37,99,235,0.15)', stroke: '#2563eb', lineWidth: 2 };
+                break;
+            case 'triangle':
+                shape = { id, type: 'triangle', x, y, width: 60, height: 50, fill: 'rgba(37,99,235,0.15)', stroke: '#2563eb', lineWidth: 2 };
                 break;
             case 'line':
                 shape = { id, type: 'line', x, y, x2: x + 60, y2: y + 40, stroke: '#2563eb', lineWidth: 2 };
@@ -245,7 +293,23 @@
                 case 'rect':
                     graphics.push({
                         type: 'rect', left: s.x, top: s.y,
-                        shape: { width: s.width, height: s.height },
+                        shape: { width: s.width, height: s.height, r: s.r || 0 },
+                        style: { fill: s.fill, stroke: s.stroke, lineWidth: s.lineWidth },
+                        draggable: true, ondragend: savePos,
+                    });
+                    break;
+                case 'roundedRect':
+                    graphics.push({
+                        type: 'rect', left: s.x, top: s.y,
+                        shape: { width: s.width, height: s.height, r: s.r || 8 },
+                        style: { fill: s.fill, stroke: s.stroke, lineWidth: s.lineWidth },
+                        draggable: true, ondragend: savePos,
+                    });
+                    break;
+                case 'ellipse':
+                    graphics.push({
+                        type: 'ellipse', left: s.x, top: s.y,
+                        shape: { cx: 0, cy: 0, rx: s.rx, ry: s.ry },
                         style: { fill: s.fill, stroke: s.stroke, lineWidth: s.lineWidth },
                         draggable: true, ondragend: savePos,
                     });
@@ -254,6 +318,14 @@
                     graphics.push({
                         type: 'circle', left: s.x, top: s.y,
                         shape: { r: s.r },
+                        style: { fill: s.fill, stroke: s.stroke, lineWidth: s.lineWidth },
+                        draggable: true, ondragend: savePos,
+                    });
+                    break;
+                case 'triangle':
+                    graphics.push({
+                        type: 'polygon', left: s.x, top: s.y,
+                        shape: { points: [[0, s.height], [s.width/2, 0], [s.width, s.height]] },
                         style: { fill: s.fill, stroke: s.stroke, lineWidth: s.lineWidth },
                         draggable: true, ondragend: savePos,
                     });
@@ -290,6 +362,9 @@
                 fontSize: AppState.subfigure.fontSize,
                 textOverlays: AppState.subfigure.textOverlays,
                 shapes: AppState.subfigure.shapes,
+                aspectRatio: AppState.subfigure.aspectRatio,
+                customWidth: AppState.subfigure.customWidth,
+                customHeight: AppState.subfigure.customHeight,
             }
         );
         updateSnapshotList();
@@ -298,16 +373,35 @@
 
     function stageToMain() {
         if (!chartInstance) return;
+        // 1. 生成缩略图并创建快照
         const url = chartInstance.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#ffffff' });
+        const subfigureData = {
+            selectedTableId: AppState.subfigure.selectedTableId,
+            template: AppState.subfigure.template,
+            colorScheme: AppState.subfigure.colorScheme,
+            fontFamily: AppState.subfigure.fontFamily,
+            fontSize: AppState.subfigure.fontSize,
+            textOverlays: AppState.subfigure.textOverlays,
+            shapes: AppState.subfigure.shapes,
+            aspectRatio: AppState.subfigure.aspectRatio,
+            customWidth: AppState.subfigure.customWidth,
+            customHeight: AppState.subfigure.customHeight,
+        };
+        const snapshot = createSnapshot(
+            `子图 ${AppState.subfigure.template}`,
+            'subfigure',
+            url,
+            subfigureData
+        );
+        updateSnapshotList();
+
+        // 2. 发送到主图（携带完整子图信息和快照ID）
         window.dispatchEvent(new CustomEvent('addsubfigure', {
             detail: {
                 imageUrl: url,
                 name: `子图 ${AppState.subfigure.template}`,
-                sourceData: {
-                    selectedTableId: AppState.subfigure.selectedTableId,
-                    template: AppState.subfigure.template,
-                    colorScheme: AppState.subfigure.colorScheme,
-                }
+                snapshotId: snapshot.id,
+                subfigureData: JSON.parse(JSON.stringify(subfigureData)),
             }
         }));
         switchPage('mainfigure');
@@ -352,6 +446,7 @@
         refreshChart,
         updateSnapshotList,
         updateTableSelect,
+        applyAspectRatio,
     };
 
     if (document.readyState === 'loading') {

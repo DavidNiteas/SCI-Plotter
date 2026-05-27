@@ -290,6 +290,30 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span class="panel-title">画布比例</span>
+                            </div>
+                            <div class="panel-body">
+                                <div class="form-row">
+                                    <select class="form-select" id="sub-aspect-ratio">
+                                        <option value="4:3">4:3</option>
+                                        <option value="16:9">16:9</option>
+                                        <option value="1:1">1:1</option>
+                                        <option value="3:4">3:4 (竖版)</option>
+                                        <option value="custom">自定义</option>
+                                    </select>
+                                </div>
+                                <div class="form-row" id="sub-custom-size-row" style="display:none">
+                                    <label>宽度 (px)</label>
+                                    <input type="number" class="form-input" id="sub-custom-width" value="600" min="200" max="1200">
+                                </div>
+                                <div class="form-row" id="sub-custom-height-row" style="display:none">
+                                    <label>高度 (px)</label>
+                                    <input type="number" class="form-input" id="sub-custom-height" value="450" min="150" max="900">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </aside>
 
@@ -324,6 +348,10 @@
                             </div>
                             <div class="panel-body">
                                 <div class="tool-grid" id="sub-tool-grid">
+                                    <button class="tool-btn active" data-tool="select" title="选择/移动">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+                                        <span>选择</span>
+                                    </button>
                                     <button class="tool-btn" data-tool="text" title="文本">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
                                         <span>文本</span>
@@ -332,9 +360,21 @@
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
                                         <span>矩形</span>
                                     </button>
+                                    <button class="tool-btn" data-tool="roundedRect" title="圆角矩形">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="6"/></svg>
+                                        <span>圆角</span>
+                                    </button>
+                                    <button class="tool-btn" data-tool="ellipse" title="椭圆">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="7"/></svg>
+                                        <span>椭圆</span>
+                                    </button>
                                     <button class="tool-btn" data-tool="circle" title="圆形">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
                                         <span>圆形</span>
+                                    </button>
+                                    <button class="tool-btn" data-tool="triangle" title="三角形">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3L3 20h18L12 3z"/></svg>
+                                        <span>三角</span>
                                     </button>
                                     <button class="tool-btn" data-tool="line" title="直线">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/></svg>
@@ -343,10 +383,6 @@
                                     <button class="tool-btn" data-tool="arrow" title="箭头">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                                         <span>箭头</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="select" title="选择/移动" active>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
-                                        <span>选择</span>
                                     </button>
                                 </div>
                             </div>
@@ -444,9 +480,21 @@
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
                                         <span>矩形</span>
                                     </button>
+                                    <button class="tool-btn" data-tool="roundedRect" title="圆角矩形">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="6"/></svg>
+                                        <span>圆角</span>
+                                    </button>
+                                    <button class="tool-btn" data-tool="ellipse" title="椭圆">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="7"/></svg>
+                                        <span>椭圆</span>
+                                    </button>
                                     <button class="tool-btn" data-tool="circle" title="圆形">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
                                         <span>圆形</span>
+                                    </button>
+                                    <button class="tool-btn" data-tool="triangle" title="三角形">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3L3 20h18L12 3z"/></svg>
+                                        <span>三角</span>
                                     </button>
                                     <button class="tool-btn" data-tool="line" title="直线">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/></svg>
@@ -461,11 +509,39 @@
                         </div>
                         <div class="panel">
                             <div class="panel-header">
-                                <span class="panel-title">操作</span>
+                                <span class="panel-title">对象操作</span>
                             </div>
                             <div class="panel-body">
                                 <div class="btn-group-vertical">
-                                    <button class="btn btn-secondary" id="btn-clear-main">
+                                    <button class="btn btn-secondary" id="btn-group-objects">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                                        组合
+                                    </button>
+                                    <button class="btn btn-secondary" id="btn-ungroup-objects">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 12h18M12 3v18"/></svg>
+                                        取消组合
+                                    </button>
+                                    <button class="btn btn-secondary" id="btn-align-left">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+                                        左对齐
+                                    </button>
+                                    <button class="btn btn-secondary" id="btn-align-center">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                                        水平居中
+                                    </button>
+                                    <button class="btn btn-secondary" id="btn-align-right">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
+                                        右对齐
+                                    </button>
+                                    <button class="btn btn-secondary" id="btn-bring-front">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                                        置于顶层
+                                    </button>
+                                    <button class="btn btn-secondary" id="btn-send-back">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M3 3h6v6H3z"/></svg>
+                                        置于底层
+                                    </button>
+                                    <button class="btn btn-danger" id="btn-clear-main">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                         清空画布
                                     </button>
