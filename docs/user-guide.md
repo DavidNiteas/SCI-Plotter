@@ -531,6 +531,20 @@ Desktop 版会将工作区自动保存到 `~/.sci-plotter/autosave.json`。下�
 
 ---
 
+## 分章详细指南
+
+本文档为完整概览。如需更详细的分章说明，请参阅：
+
+| 章节 | 内容 |
+|------|------|
+| [数据管理](user-guide/01-data-management.md) | 数据导入、编辑、管理与准备建议 |
+| [分析工作台](user-guide/02-analysis-workbench.md) | 过滤、排序、缺失值处理、标准化、计算新列、12 种统计方法 |
+| [子图编辑](user-guide/03-subfigure-editor.md) | 18 种图表模板、配色方案、误差棒、趋势线、显著性标注 |
+| [主图排版与导出](user-guide/04-mainfigure-layout.md) | 期刊尺寸预设、图层管理、对齐辅助、导出格式与工作区管理 |
+| [最佳实践与常见问题](user-guide/05-tips-and-best-practices.md) | 实用技巧、FAQ、版本选择建议 |
+
+---
+
 ## 下一步
 
 - [功能特性参考](features.md) — 完整功能清单与技术规格
