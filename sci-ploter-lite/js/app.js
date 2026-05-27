@@ -4,7 +4,20 @@
 
 (function() {
     function init() {
-        console.log('SCI-Ploter v' + AppState.version + ' 初始化中...');
+        const caps = SciPloterBridge?.getCapabilities?.() || {};
+        const edition = caps.fileSystem ? 'Desktop' : 'Lite';
+        console.log(`SCI-Ploter v${AppState.version} [${edition}] 初始化中...`);
+
+        // 桌面版标识
+        if (caps.fileSystem) {
+            const header = document.querySelector('.app-header .logo span');
+            if (header) header.textContent = 'SCI-Ploter Desktop';
+        }
+
+        // 桌面版特有按钮显示
+        document.querySelectorAll('[data-desktop-only]').forEach(el => {
+            el.style.display = caps.fileSystem ? '' : 'none';
+        });
 
         if (window.DataManager) {
             DataManager.renderTableList();

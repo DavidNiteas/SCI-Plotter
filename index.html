@@ -3,590 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="0; url=sci-ploter-lite/">
     <title>SCI-Ploter — 科研绘图工具</title>
-    <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/components.css">
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --text: #1f2937;
+            --primary: #2563eb;
+            --primary-light: #dbeafe;
+            --border: #e5e7eb;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .portal {
+            max-width: 560px;
+            width: 100%;
+            text-align: center;
+        }
+        .logo {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 24px;
+            background: var(--primary);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        h1 { font-size: 28px; margin-bottom: 8px; }
+        .subtitle { color: #6b7280; margin-bottom: 32px; }
+        .cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .card:hover {
+            box-shadow: var(--shadow);
+            transform: translateY(-2px);
+        }
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 20px;
+        }
+        .card-lite .card-icon { background: var(--primary-light); }
+        .card-full .card-icon { background: #dcfce7; }
+        .card h3 { font-size: 16px; margin-bottom: 6px; }
+        .card p { font-size: 13px; color: #6b7280; line-height: 1.5; }
+        .install {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+        .install h4 { font-size: 14px; margin-bottom: 10px; color: #6b7280; }
+        code {
+            display: block;
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 13px;
+            text-align: left;
+            margin-bottom: 8px;
+        }
+        .install-note { font-size: 12px; color: #9ca3af; }
+        @media (max-width: 480px) {
+            .cards { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
-    <div id="app">
-        <!-- 顶部标题栏 -->
-        <header class="app-header">
-            <div class="logo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2"/>
-                    <path d="M3 9h18M9 21V9"/>
-                </svg>
-                <span>SCI-Ploter</span>
+    <div class="portal">
+        <div class="logo">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <path d="M3 9h18M9 21V9"/>
+            </svg>
+        </div>
+        <h1>SCI-Ploter</h1>
+        <p class="subtitle">选择适合您的使用方式</p>
+
+        <div class="cards">
+            <a href="sci-ploter-lite/" class="card card-lite">
+                <div class="card-icon">🌐</div>
+                <h3>Lite 版本</h3>
+                <p>零安装，浏览器直接打开<br>适合快速绘图与轻度使用</p>
+            </a>
+            <div class="card card-full">
+                <div class="card-icon">🖥️</div>
+                <h3>完整版</h3>
+                <p>桌面级功能，本地文件系统<br>统计分析、矢量导出、自动保存</p>
             </div>
-            <div class="header-actions">
-                <button class="btn btn-sm" id="btn-save-workspace" title="保存工作区 (Ctrl+S)">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                    保存工作区
-                </button>
-                <button class="btn btn-sm" id="btn-open-workspace" title="打开工作区">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-                    打开工作区
-                </button>
-                <button class="btn btn-sm btn-primary" id="btn-export" title="导出图片 (Ctrl+E)">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    导出
-                </button>
-            </div>
-        </header>
+        </div>
 
-        <!-- 主内容区 -->
-        <main class="app-body">
-            <!-- ========== 1. 数据管理页面 ========== -->
-            <section class="page" id="page-datamanage">
-                <aside class="sidebar sidebar-left">
-                    <div class="panel-group">
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">数据表</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="table-list" id="data-table-list">
-                                    <p class="empty-tip">暂无数据表</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">操作</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="btn-group-vertical">
-                                    <button class="btn btn-secondary" id="btn-import-csv">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                        导入 CSV
-                                    </button>
-                                    <button class="btn btn-secondary" id="btn-new-table">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                        新建空表
-                                    </button>
-                                    <button class="btn btn-secondary" id="btn-export-table-csv">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                        导出当前表为 CSV
-                                    </button>
-                                    <button class="btn btn-secondary" id="btn-export-all-json">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                                        导出全部表为 JSON
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-
-                <div class="canvas-area data-area">
-                    <div class="data-editor" id="data-editor">
-                        <div class="data-editor-header">
-                            <input type="text" class="form-input" id="table-name-input" placeholder="数据表名称" value="">
-                            <div class="data-editor-actions">
-                                <button class="btn btn-sm" id="btn-add-row">+ 行</button>
-                                <button class="btn btn-sm" id="btn-add-col">+ 列</button>
-                                <button class="btn btn-sm btn-danger" id="btn-del-row">- 行</button>
-                                <button class="btn btn-sm btn-danger" id="btn-del-col">- 列</button>
-                            </div>
-                        </div>
-                        <div class="data-table-wrap">
-                            <table class="data-grid" id="data-grid">
-                                <thead><tr><th></th></tr></thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                        <p class="data-hint">点击单元格直接编辑，按 Tab 切换，按 Enter 下一行</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ========== 2. 分析工作台 ========== -->
-            <section class="page hidden" id="page-workbench">
-                <aside class="sidebar sidebar-left">
-                    <div class="panel-group">
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">源数据表</span>
-                            </div>
-                            <div class="panel-body">
-                                <select class="form-select" id="wb-source-table">
-                                    <option value="">选择数据表...</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">选择列</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="column-checklist" id="wb-column-list">
-                                    <p class="empty-tip">先选择源表</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">排序</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="form-row">
-                                    <label>排序列</label>
-                                    <select class="form-select" id="wb-sort-col">
-                                        <option value="">无</option>
-                                    </select>
-                                </div>
-                                <div class="form-row">
-                                    <label>方向</label>
-                                    <select class="form-select" id="wb-sort-dir">
-                                        <option value="asc">升序</option>
-                                        <option value="desc">降序</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-
-                <div class="canvas-area data-area">
-                    <div class="data-editor">
-                        <div class="data-editor-header">
-                            <span id="wb-preview-title">预览</span>
-                            <span class="text-muted" id="wb-preview-info"></span>
-                        </div>
-                        <div class="data-table-wrap">
-                            <table class="data-grid" id="wb-preview-grid">
-                                <thead><tr></tr></thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <aside class="sidebar sidebar-right">
-                    <div class="panel-group">
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">组合新列</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="form-row">
-                                    <label>新列名称</label>
-                                    <input type="text" class="form-input" id="wb-newcol-name" placeholder="例如: Ratio">
-                                </div>
-                                <div class="form-row">
-                                    <label>列 A</label>
-                                    <select class="form-select" id="wb-newcol-a"><option value="">选择...</option></select>
-                                </div>
-                                <div class="form-row">
-                                    <label>运算符</label>
-                                    <select class="form-select" id="wb-newcol-op">
-                                        <option value="+">+ (加)</option>
-                                        <option value="-">- (减)</option>
-                                        <option value="*">× (乘)</option>
-                                        <option value="/">÷ (除)</option>
-                                    </select>
-                                </div>
-                                <div class="form-row">
-                                    <label>列 B</label>
-                                    <select class="form-select" id="wb-newcol-b"><option value="">选择...</option></select>
-                                </div>
-                                <button class="btn btn-secondary" id="btn-wb-add-col">添加计算列</button>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">生成新表</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="form-row">
-                                    <label>新表名称</label>
-                                    <input type="text" class="form-input" id="wb-newtable-name" placeholder="例如: 处理后数据">
-                                </div>
-                                <button class="btn btn-accent" id="btn-wb-create-table">生成并保存</button>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-            </section>
-
-            <!-- ========== 3. 子图窗口 ========== -->
-            <section class="page hidden" id="page-subfigure">
-                <aside class="sidebar sidebar-left">
-                    <div class="panel-group">
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">数据源</span>
-                            </div>
-                            <div class="panel-body">
-                                <select class="form-select" id="sub-table-select">
-                                    <option value="">选择数据表...</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">图表模板</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="template-grid" id="template-grid">
-                                    <button class="template-card active" data-template="scatter">
-                                        <div class="template-icon">◎</div>
-                                        <span>散点图</span>
-                                    </button>
-                                    <button class="template-card" data-template="line">
-                                        <div class="template-icon">〰</div>
-                                        <span>折线图</span>
-                                    </button>
-                                    <button class="template-card" data-template="bar">
-                                        <div class="template-icon">▤</div>
-                                        <span>柱状图</span>
-                                    </button>
-                                    <button class="template-card" data-template="boxplot">
-                                        <div class="template-icon">▣</div>
-                                        <span>箱线图</span>
-                                    </button>
-                                    <button class="template-card" data-template="heatmap">
-                                        <div class="template-icon">▦</div>
-                                        <span>热力图</span>
-                                    </button>
-                                    <button class="template-card" data-template="histogram">
-                                        <div class="template-icon">▒</div>
-                                        <span>直方图</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">样式</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="form-row">
-                                    <label>配色方案</label>
-                                    <select class="form-select" id="color-scheme">
-                                        <option value="academic">学术蓝</option>
-                                        <option value="nature">Nature</option>
-                                        <option value="science">Science</option>
-                                        <option value="viridis">Viridis</option>
-                                        <option value="warm">暖色</option>
-                                        <option value="cool">冷色</option>
-                                    </select>
-                                </div>
-                                <div class="form-row">
-                                    <label>字体</label>
-                                    <select class="form-select" id="font-family">
-                                        <option value="Arial, sans-serif">Arial</option>
-                                        <option value="Times New Roman, serif">Times New Roman</option>
-                                        <option value="Helvetica, sans-serif">Helvetica</option>
-                                        <option value="Georgia, serif">Georgia</option>
-                                    </select>
-                                </div>
-                                <div class="form-row">
-                                    <label>字号</label>
-                                    <input type="range" class="form-range" id="font-size" min="10" max="24" value="14">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">画布比例</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="form-row">
-                                    <select class="form-select" id="sub-aspect-ratio">
-                                        <option value="4:3">4:3</option>
-                                        <option value="16:9">16:9</option>
-                                        <option value="1:1">1:1</option>
-                                        <option value="3:4">3:4 (竖版)</option>
-                                        <option value="custom">自定义</option>
-                                    </select>
-                                </div>
-                                <div class="form-row" id="sub-custom-size-row" style="display:none">
-                                    <label>宽度 (px)</label>
-                                    <input type="number" class="form-input" id="sub-custom-width" value="600" min="200" max="1200">
-                                </div>
-                                <div class="form-row" id="sub-custom-height-row" style="display:none">
-                                    <label>高度 (px)</label>
-                                    <input type="number" class="form-input" id="sub-custom-height" value="450" min="150" max="900">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-
-                <div class="canvas-area">
-                    <div class="canvas-wrapper">
-                        <div id="subfigure-chart" class="chart-container"></div>
-                    </div>
-                </div>
-
-                <aside class="sidebar sidebar-right">
-                    <div class="panel-group">
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">操作</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="btn-group-vertical">
-                                    <button class="btn btn-accent" id="btn-stage-sub">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                                        发送到主图
-                                    </button>
-                                    <button class="btn btn-secondary" id="btn-snapshot-sub">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                                        暂存当前子图
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">绘图工具</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="tool-grid" id="sub-tool-grid">
-                                    <button class="tool-btn active" data-tool="select" title="选择/移动">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
-                                        <span>选择</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="text" title="文本">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
-                                        <span>文本</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="rect" title="矩形">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-                                        <span>矩形</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="roundedRect" title="圆角矩形">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="6"/></svg>
-                                        <span>圆角</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="ellipse" title="椭圆">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="7"/></svg>
-                                        <span>椭圆</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="circle" title="圆形">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
-                                        <span>圆形</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="triangle" title="三角形">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3L3 20h18L12 3z"/></svg>
-                                        <span>三角</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="line" title="直线">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/></svg>
-                                        <span>直线</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="arrow" title="箭头">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                                        <span>箭头</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-            </section>
-
-            <!-- ========== 4. 主图窗口 ========== -->
-            <section class="page hidden" id="page-mainfigure">
-                <aside class="sidebar sidebar-left">
-                    <div class="panel-group">
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">画布设置</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="form-row">
-                                    <label>宽度 (px)</label>
-                                    <input type="number" class="form-input" id="canvas-width" value="1200">
-                                </div>
-                                <div class="form-row">
-                                    <label>高度 (px)</label>
-                                    <input type="number" class="form-input" id="canvas-height" value="800">
-                                </div>
-                                <div class="form-row">
-                                    <label>背景色</label>
-                                    <input type="color" class="form-color" id="canvas-bg" value="#ffffff">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">图层</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="layer-list" id="layer-list">
-                                    <p class="empty-tip">暂无图层</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">暂存子图库</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="snapshot-list" id="snapshot-list">
-                                    <p class="empty-tip">暂无暂存子图</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">保存</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="btn-group-vertical">
-                                    <button class="btn btn-secondary" id="btn-save-figure">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                                        保存为可编辑文件
-                                    </button>
-                                    <button class="btn btn-primary" id="btn-export-main">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                        导出为图片
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-
-                <div class="canvas-area main-canvas-area">
-                    <div class="canvas-wrapper">
-                        <canvas id="main-canvas"></canvas>
-                    </div>
-                </div>
-
-                <aside class="sidebar sidebar-right">
-                    <div class="panel-group">
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">绘图工具</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="tool-grid" id="main-tool-grid">
-                                    <button class="tool-btn active" data-tool="select" title="选择/移动">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
-                                        <span>选择</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="text" title="文本">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
-                                        <span>文本</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="rect" title="矩形">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-                                        <span>矩形</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="roundedRect" title="圆角矩形">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="6"/></svg>
-                                        <span>圆角</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="ellipse" title="椭圆">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="7"/></svg>
-                                        <span>椭圆</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="circle" title="圆形">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
-                                        <span>圆形</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="triangle" title="三角形">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3L3 20h18L12 3z"/></svg>
-                                        <span>三角</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="line" title="直线">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/></svg>
-                                        <span>直线</span>
-                                    </button>
-                                    <button class="tool-btn" data-tool="arrow" title="箭头">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                                        <span>箭头</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="panel">
-                            <div class="panel-header">
-                                <span class="panel-title">对象操作</span>
-                            </div>
-                            <div class="panel-body">
-                                <div class="btn-group-vertical">
-                                    <button class="btn btn-secondary" id="btn-group-objects">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                                        组合
-                                    </button>
-                                    <button class="btn btn-secondary" id="btn-ungroup-objects">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 12h18M12 3v18"/></svg>
-                                        取消组合
-                                    </button>
-                                    <button class="btn btn-secondary" id="btn-align-left">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
-                                        左对齐
-                                    </button>
-                                    <button class="btn btn-secondary" id="btn-align-center">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-                                        水平居中
-                                    </button>
-                                    <button class="btn btn-secondary" id="btn-align-right">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
-                                        右对齐
-                                    </button>
-                                    <button class="btn btn-secondary" id="btn-bring-front">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-                                        置于顶层
-                                    </button>
-                                    <button class="btn btn-secondary" id="btn-send-back">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M3 3h6v6H3z"/></svg>
-                                        置于底层
-                                    </button>
-                                    <button class="btn btn-danger" id="btn-clear-main">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                                        清空画布
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-            </section>
-        </main>
-
-        <!-- 底部 Dock -->
-        <nav class="app-dock">
-            <button class="dock-item active" data-page="datamanage">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                <span>数据管理</span>
-            </button>
-            <button class="dock-item" data-page="workbench">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                <span>分析工作台</span>
-            </button>
-            <button class="dock-item" data-page="subfigure">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-                <span>子图编辑</span>
-            </button>
-            <button class="dock-item" data-page="mainfigure">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8" cy="8" r="2"/><circle cx="16" cy="16" r="2"/></svg>
-                <span>主图排版</span>
-            </button>
-        </nav>
+        <div class="install">
+            <h4>💡 安装桌面完整版</h4>
+            <code>pip install sci-ploter</code>
+            <code>sci-ploter</code>
+            <p class="install-note">支持 Windows / macOS / Linux · 需要 Python 3.10+</p>
+        </div>
     </div>
-
-    <a id="download-link" style="display:none"></a>
-
-    <!-- 脚本 -->
-    <script src="js/state.js"></script>
-    <script src="js/csv-parser.js"></script>
-    <script src="js/color-schemes.js"></script>
-    <script src="js/datamanage/manager.js"></script>
-    <script src="js/datamanage/workbench.js"></script>
-    <script src="js/subfigure/templates.js"></script>
-    <script src="js/subfigure/editor.js"></script>
-    <script src="js/mainfigure/canvas.js"></script>
-    <script src="js/export.js"></script>
-    <script src="js/ui/dock.js"></script>
-    <script src="js/app.js"></script>
 </body>
 </html>

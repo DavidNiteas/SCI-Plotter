@@ -1,5 +1,6 @@
 /**
  * 保存与导出系统
+ * 适配双架构：Lite 版通过 download/upload，Full 版通过 SciPloterBridge
  */
 
 (function() {
@@ -7,9 +8,18 @@
         const blob = new Blob([content], { type: mimeType || 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.getElementById('download-link');
-        link.href = url;
-        link.download = filename;
-        link.click();
+        if (link) {
+            link.href = url;
+            link.download = filename;
+            link.click();
+        } else {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
         URL.revokeObjectURL(url);
     }
 
@@ -25,64 +35,54 @@
     // ===== 工作区 =====
     function saveWorkspace() {
         const workspace = exportWorkspace();
-        const json = JSON.stringify(workspace, null, 2);
         const date = new Date().toISOString().slice(0, 10);
-        downloadFile(json, `SCI-Ploter-Workspace-${date}.json`);
+        SciPloterBridge.saveWorkspace(workspace, `SCI-Ploter-Workspace-${date}.json`);
     }
 
     async function openWorkspace() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json,.spf';
-        input.onchange = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            try {
-                const text = await readFile(file);
-                const data = JSON.parse(text);
+        try {
+            const data = await SciPloterBridge.openWorkspace();
+            if (!data) return;
 
-                if (data.format === 'sci-ploter-figure') {
-                    const layers = importEditableFigure(data);
-                    SubfigureEditor?.updateSnapshotList();
-                    MainFigureCanvas?.updateSnapshotList();
-                    if (MainFigureCanvas && layers.length > 0) {
-                        MainFigureCanvas.clearCanvas();
-                        layers.forEach(layerData => {
-                            if (layerData.snapshotId) {
-                                const snap = AppState.snapshots.find(s => s.id === layerData.snapshotId);
-                                if (snap) {
-                                    MainFigureCanvas.addImageObject(snap.thumbnail, layerData.name, layerData.left, layerData.top, snap.id, layerData.subfigureData);
-                                }
+            if (data.format === 'sci-ploter-figure') {
+                const layers = importEditableFigure(data);
+                SubfigureEditor?.updateSnapshotList();
+                MainFigureCanvas?.updateSnapshotList();
+                if (MainFigureCanvas && layers.length > 0) {
+                    MainFigureCanvas.clearCanvas();
+                    layers.forEach(layerData => {
+                        if (layerData.snapshotId) {
+                            const snap = AppState.snapshots.find(s => s.id === layerData.snapshotId);
+                            if (snap) {
+                                MainFigureCanvas.addImageObject(snap.thumbnail, layerData.name, layerData.left, layerData.top, snap.id, layerData.subfigureData);
                             }
-                        });
-                    }
-                    alert('图文件加载成功');
-                } else {
-                    importWorkspace(data);
-                    SubfigureEditor?.updateTableSelect();
-                    SubfigureEditor?.applyAspectRatio();
-                    SubfigureEditor?.refreshChart();
-                    SubfigureEditor?.updateSnapshotList();
-                    DataManager?.renderTableList();
-                    DataManager?.renderGrid();
-                    Workbench?.updateSourceSelect();
-                    MainFigureCanvas?.updateSnapshotList();
-                    if (MainFigureCanvas) MainFigureCanvas.clearCanvas();
-                    alert('工作区加载成功');
+                        }
+                    });
                 }
-            } catch (err) {
-                alert('加载失败: ' + err.message);
+                alert('图文件加载成功');
+            } else {
+                importWorkspace(data);
+                SubfigureEditor?.updateTableSelect();
+                SubfigureEditor?.applyAspectRatio();
+                SubfigureEditor?.refreshChart();
+                SubfigureEditor?.updateSnapshotList();
+                DataManager?.renderTableList();
+                DataManager?.renderGrid();
+                Workbench?.updateSourceSelect();
+                MainFigureCanvas?.updateSnapshotList();
+                if (MainFigureCanvas) MainFigureCanvas.clearCanvas();
+                alert('工作区加载成功');
             }
-        };
-        input.click();
+        } catch (err) {
+            alert('加载失败: ' + err.message);
+        }
     }
 
     // ===== 可编辑图保存 =====
     function saveEditableFigure() {
         const figure = exportEditableFigure();
-        const json = JSON.stringify(figure, null, 2);
         const date = new Date().toISOString().slice(0, 10);
-        downloadFile(json, `Figure-${date}.spf`, 'application/json');
+        SciPloterBridge.saveEditableFigure(figure, `Figure-${date}.spf`);
     }
 
     // ===== 图片导出 =====
@@ -171,16 +171,90 @@
         }
     }
 
+    // ===== 桌面版特有导出 =====
+    async function exportAsPDF() {
+        if (!SciPloterBridge.isDesktop) {
+            alert('⚠️ PDF 导出仅在桌面版可用');
+            return;
+        }
+        const figureData = {
+            width: AppState.mainfigure.width,
+            height: AppState.mainfigure.height,
+            bgColor: AppState.mainfigure.bgColor,
+            layers: AppState.mainfigure.layers.map(l => ({
+                type: l.type,
+                name: l.name,
+                left: l.fabricObject?.left,
+                top: l.fabricObject?.top,
+                width: l.fabricObject?.width,
+                height: l.fabricObject?.height,
+                angle: l.fabricObject?.angle,
+                scaleX: l.fabricObject?.scaleX,
+                scaleY: l.fabricObject?.scaleY,
+            })),
+        };
+        await SciPloterBridge.exportPDF(figureData);
+    }
+
+    async function exportAsVector(format) {
+        if (!SciPloterBridge.isDesktop) {
+            alert('⚠️ ' + format.toUpperCase() + ' 导出仅在桌面版可用');
+            return;
+        }
+        const figureData = {
+            width: AppState.mainfigure.width,
+            height: AppState.mainfigure.height,
+            bgColor: AppState.mainfigure.bgColor,
+            layers: AppState.mainfigure.layers.map(l => ({
+                type: l.type,
+                name: l.name,
+                left: l.fabricObject?.left,
+                top: l.fabricObject?.top,
+                width: l.fabricObject?.width,
+                height: l.fabricObject?.height,
+                angle: l.fabricObject?.angle,
+                scaleX: l.fabricObject?.scaleX,
+                scaleY: l.fabricObject?.scaleY,
+            })),
+        };
+        await SciPloterBridge.exportVector(figureData, format);
+    }
+
+    // ===== 数据表导出 =====
+    function exportAllTables() {
+        const data = window.exportAllTables ? window.exportAllTables() : [];
+        downloadFile(JSON.stringify(data, null, 2), 'all-tables.json', 'application/json');
+    }
+
+    function exportTableAsCSV(tableId) {
+        const table = getTable(tableId);
+        if (!table) { alert('数据表不存在'); return; }
+        let csv = table.headers.join(',') + '\n';
+        table.rows.forEach(row => {
+            csv += row.map(cell => {
+                const s = String(cell ?? '');
+                if (s.includes(',') || s.includes('\n') || s.includes('"')) {
+                    return '"' + s.replace(/"/g, '""') + '"';
+                }
+                return s;
+            }).join(',') + '\n';
+        });
+        downloadFile(csv, `${table.name}.csv`, 'text/csv');
+    }
+
     function init() {
         document.getElementById('btn-save-workspace')?.addEventListener('click', saveWorkspace);
         document.getElementById('btn-open-workspace')?.addEventListener('click', openWorkspace);
         document.getElementById('btn-export')?.addEventListener('click', exportAsImage);
         document.getElementById('btn-save-figure')?.addEventListener('click', saveEditableFigure);
         document.getElementById('btn-export-main')?.addEventListener('click', exportAsImage);
+        document.getElementById('btn-export-pdf')?.addEventListener('click', exportAsPDF);
+        document.getElementById('btn-export-svg')?.addEventListener('click', () => exportAsVector('svg'));
     }
 
     window.ExportSystem = {
         saveWorkspace, openWorkspace, saveEditableFigure, exportAsImage,
+        exportAsPDF, exportAsVector, exportAllTables, exportTableAsCSV,
     };
 
     if (document.readyState === 'loading') {
