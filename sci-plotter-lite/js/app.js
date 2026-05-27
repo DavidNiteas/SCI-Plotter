@@ -45,6 +45,10 @@
             }
         });
 
+        if (typeof StatAnalysis !== 'undefined') {
+            console.log('JS 统计分析引擎已加载');
+        }
+
         console.log('SCI-Plotter 初始化完成');
     }
 

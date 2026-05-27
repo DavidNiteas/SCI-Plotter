@@ -113,11 +113,23 @@ const SciPloterBridge = (function() {
 
         async analyze(data, method, params) {
             params = params || {};
-            if (!isDesktop) {
-                Toast.warning('高级分析功能仅在桌面版可用，请安装：pip install sci-plotter');
-                return null;
+            if (isDesktop) {
+                try {
+                    const result = await callApi('analyze_data', data, method, params);
+                    if (result) return result;
+                } catch (e) {
+                    console.warn('Python 分析回退到 JS 引擎:', e.message);
+                }
             }
-            return await callApi('analyze_data', data, method, params);
+            if (typeof StatAnalysis !== 'undefined') {
+                try {
+                    return StatAnalysis.run(data, method, params);
+                } catch (e) {
+                    return { error: e.message };
+                }
+            }
+            if (Toast?.warning) Toast.warning('分析引擎不可用');
+            return null;
         },
 
         async exportVector(figureData, format) {
@@ -154,7 +166,7 @@ const SciPloterBridge = (function() {
                 autoSave: isDesktop,
                 vectorExport: isDesktop,
                 pdfExport: isDesktop,
-                dataAnalysis: isDesktop,
+                dataAnalysis: true,
                 printing: isDesktop,
                 plugins: isDesktop,
             };

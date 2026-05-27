@@ -287,7 +287,7 @@
                                 <button class="btn btn-accent" id="btn-wb-create-table">生成并保存</button>
                             </div>
                         </div>
-                        <div class="panel" data-desktop-only>
+                        <div class="panel">
                             <div class="panel-header">
                                 <span class="panel-title">统计分析</span>
                             </div>
@@ -314,7 +314,7 @@
                                 <button class="btn btn-primary" id="btn-wb-run-stat">运行分析</button>
                             </div>
                         </div>
-                        <div class="panel" data-desktop-only id="wb-stat-result-panel" style="display:none">
+                        <div class="panel" id="wb-stat-result-panel" style="display:none">
                             <div class="panel-header">
                                 <span class="panel-title">分析结果</span>
                                 <div class="stat-view-toggle">
@@ -552,6 +552,46 @@
                                         <div class="template-icon">〰</div>
                                         <span>分组折线图</span>
                                     </button>
+                                    <button class="template-card" data-template="area">
+                                        <div class="template-icon">▓</div>
+                                        <span>面积图</span>
+                                    </button>
+                                    <button class="template-card" data-template="stacked_bar">
+                                        <div class="template-icon">▧</div>
+                                        <span>堆叠柱状图</span>
+                                    </button>
+                                    <button class="template-card" data-template="donut">
+                                        <div class="template-icon">◉</div>
+                                        <span>环形图</span>
+                                    </button>
+                                    <button class="template-card" data-template="radar">
+                                        <div class="template-icon">✦</div>
+                                        <span>雷达图</span>
+                                    </button>
+                                    <button class="template-card" data-template="bubble">
+                                        <div class="template-icon">◌</div>
+                                        <span>气泡图</span>
+                                    </button>
+                                    <button class="template-card" data-template="correlation_matrix">
+                                        <div class="template-icon">▩</div>
+                                        <span>相关矩阵</span>
+                                    </button>
+                                    <button class="template-card" data-template="violin">
+                                        <div class="template-icon">♪</div>
+                                        <span>小提琴图</span>
+                                    </button>
+                                    <button class="template-card" data-template="waterfall">
+                                        <div class="template-icon">⟟</div>
+                                        <span>瀑布图</span>
+                                    </button>
+                                    <button class="template-card" data-template="dumbbell">
+                                        <div class="template-icon">⊶</div>
+                                        <span>哑铃图</span>
+                                    </button>
+                                    <button class="template-card" data-template="parallel">
+                                        <div class="template-icon">≡</div>
+                                        <span>平行坐标</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -566,9 +606,17 @@
                                         <option value="academic">学术蓝</option>
                                         <option value="nature">Nature</option>
                                         <option value="science">Science</option>
+                                        <option value="cell">Cell</option>
+                                        <option value="lancet">Lancet</option>
+                                        <option value="jama">JAMA</option>
                                         <option value="viridis">Viridis</option>
+                                        <option value="seaborn">Seaborn</option>
+                                        <option value="tableau10">Tableau 10</option>
+                                        <option value="okabe_ito">Okabe-Ito (色盲友好)</option>
                                         <option value="warm">暖色</option>
                                         <option value="cool">冷色</option>
+                                        <option value="pastel">柔和色</option>
+                                        <option value="monochrome">黑白</option>
                                     </select>
                                 </div>
                                 <div class="form-row">
@@ -1056,6 +1104,7 @@
     <script src="js/history.js"></script>
     <script src="js/ui/toast.js"></script>
     <script src="js/bridge.js"></script>
+    <script src="js/analysis.js"></script>
     <script src="js/csv-parser.js"></script>
     <script src="js/xlsx-handler.js"></script>
     <script src="js/color-schemes.js"></script>

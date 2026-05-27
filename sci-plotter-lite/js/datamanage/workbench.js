@@ -1111,7 +1111,7 @@
         try {
             const result = await SciPloterBridge.analyze(tableData, config.method, config.params);
             if (!result) {
-                if (resultDiv) resultDiv.innerHTML = '<div class="stat-error">分析失败：桌面版功能不可用</div>';
+                if (resultDiv) resultDiv.innerHTML = '<div class="stat-error">分析失败：分析引擎不可用</div>';
                 return;
             }
             if (result.error) {

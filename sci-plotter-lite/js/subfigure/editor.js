@@ -18,6 +18,16 @@
         boxplot:    { group: 'categorical', value: 'numeric' },
         heatmap:    { x: 'numeric', y: 'numeric', value: 'numeric' },
         histogram:  { x: 'numeric' },
+        area:       { x: 'any', y: 'numeric', group: 'categorical' },
+        stacked_bar: { x: 'categorical', y: 'numeric', group: 'categorical' },
+        donut:      { x: 'categorical', y: 'numeric' },
+        radar:      { group: 'categorical' },
+        bubble:     { x: 'numeric', y: 'numeric', value: 'numeric', group: 'categorical' },
+        correlation_matrix: {},
+        violin:     { group: 'categorical', value: 'numeric' },
+        waterfall:  { x: 'categorical', y: 'numeric' },
+        dumbbell:   { x: 'categorical', y: 'numeric', group: 'numeric' },
+        parallel:   { group: 'categorical' },
     };
 
     function init() {
@@ -402,7 +412,7 @@
     function updateTrendLinePanelVisibility() {
         const panel = document.getElementById('panel-trend-line');
         if (panel) {
-            const supportsTrendLine = ['scatter', 'line'].includes(AppState.subfigure.template);
+            const supportsTrendLine = ['scatter', 'line', 'area', 'bubble'].includes(AppState.subfigure.template);
             panel.style.display = supportsTrendLine ? '' : 'none';
         }
     }
