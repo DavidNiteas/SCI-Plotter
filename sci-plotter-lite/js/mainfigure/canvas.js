@@ -702,6 +702,13 @@
                     AppState.subfigure.customHeight = subfigureData.customHeight || 450;
                     AppState.subfigure.useDataPointColors = subfigureData.useDataPointColors || false;
                     AppState.subfigure.customSeriesColors = subfigureData.customSeriesColors || {};
+                    AppState.subfigure.layoutMode = subfigureData.layoutMode || 'auto';
+                    AppState.subfigure.manualLayout = subfigureData.manualLayout || {
+                        grid: { left: null, top: null, right: null, bottom: null, width: null, height: null },
+                        legend: { left: null, top: null, right: null, bottom: null, orient: null },
+                        title: { left: null, top: null },
+                    };
+                    AppState.subfigure.dataPointColors = subfigureData.dataPointColors || {};
 
                     // 检查源数据表是否存在
                     const sourceTable = getTable(subfigureData.selectedTableId);

@@ -32,7 +32,7 @@ const AppState = {
         colorScheme: 'academic',
         fontFamily: 'Arial, sans-serif',
         fontSize: 14,
-        aspectRatio: '4:3',   // 子图比例: 4:3, 16:9, 1:1, 3:4, custom
+        aspectRatio: '16:9',   // 子图比例: 4:3, 16:9, 1:1, 3:4, custom
         customWidth: 600,
         customHeight: 450,
         columnMapping: {      // 数据列映射，值为列名（header）或 null
@@ -56,6 +56,7 @@ const AppState = {
             showYTicks: true,
             titleShow: true,
             titlePosition: 'center',
+            titleLeft: null,   // 手动标题水平位置（百分比字符串）
         },
         errorBar: {
             enabled: false,
@@ -80,6 +81,13 @@ const AppState = {
         significanceAnnotations: [],
         useDataPointColors: false,    // 单系列数据点使用不同颜色
         customSeriesColors: {},       // 手动覆盖的系列颜色 { seriesName: color }
+        layoutMode: 'auto',           // 'auto' | 'manual'
+        manualLayout: {
+            grid: { left: null, top: null, right: null, bottom: null, width: null, height: null },
+            legend: { left: null, top: null, right: null, bottom: null, orient: null },
+            title: { left: null, top: null },
+        },
+        dataPointColors: {},          // { seriesName_dataIndex: color }
     },
 
     // ===== 自定义配色 =====
@@ -234,6 +242,9 @@ function exportWorkspace() {
             significanceAnnotations: AppState.subfigure.significanceAnnotations,
             useDataPointColors: AppState.subfigure.useDataPointColors,
             customSeriesColors: AppState.subfigure.customSeriesColors,
+            layoutMode: AppState.subfigure.layoutMode,
+            manualLayout: JSON.parse(JSON.stringify(AppState.subfigure.manualLayout)),
+            dataPointColors: { ...AppState.subfigure.dataPointColors },
         },
         customPalettes: AppState.customPalettes,
         customPaletteCounter: AppState.customPaletteCounter,

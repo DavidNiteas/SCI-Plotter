@@ -403,6 +403,15 @@
 
 .column-checkitem:hover { background: var(--bg-hover); }
 
+.column-checkitem.active {
+    background: var(--bg-accent);
+    color: #fff;
+}
+
+.column-checkitem.active span {
+    color: #fff;
+}
+
 .column-checkitem input[type="checkbox"] {
     accent-color: var(--bg-accent);
     cursor: pointer;
@@ -1388,4 +1397,135 @@
 
 .btn-text:hover {
     text-decoration: underline;
+}
+
+/* ===== 浮动编辑工具栏 ===== */
+
+.float-toolbar {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 500;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.float-toolbar.hidden {
+    display: none;
+}
+
+.float-toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.float-toolbar-group input[type="color"] {
+    width: 28px;
+    height: 24px;
+    padding: 1px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    background: var(--bg-primary);
+}
+
+.float-toolbar-group input[type="text"] {
+    width: 120px;
+    padding: 4px 8px;
+    font-size: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.float-toolbar-group input[type="number"] {
+    width: 50px;
+    padding: 4px 6px;
+    font-size: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.float-toolbar-group select {
+    padding: 4px 6px;
+    font-size: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.float-toolbar-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border-light);
+}
+
+.float-toolbar-close {
+    background: none;
+    border: none;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0 2px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+}
+
+.float-toolbar-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* ===== 手动模式布局边界指示线 ===== */
+
+.layout-guide-line {
+    stroke: var(--bg-accent);
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+    fill: none;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.layout-guide-label {
+    fill: var(--bg-accent);
+    font-size: 10px;
+    font-weight: bold;
+    pointer-events: none;
+}
+
+/* 手动模式控制手柄 */
+.layout-handle {
+    cursor: grab;
+    transition: r 0.15s ease;
+}
+
+.layout-handle:hover {
+    r: 6;
+    cursor: grab;
+}
+
+.layout-handle:active {
+    cursor: grabbing;
+}
+
+/* 布局提示 */
+.layout-hint {
+    padding: 4px 0;
 }

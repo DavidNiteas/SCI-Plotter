@@ -64,6 +64,9 @@
 
         // 绘图工具事件
         initDrawingTools();
+
+        // 图例控制面板初始化
+        initLegendPanel();
     }
 
     function bindEvents() {
@@ -144,7 +147,7 @@
             'axis-y-max': { key: 'yMax', type: 'number' },
             'axis-x-scale': { key: 'xScale', type: 'text' },
             'axis-y-scale': { key: 'yScale', type: 'text' },
-            'axis-title-position': { key: 'titlePosition', type: 'text' },
+            'axis-title-position': { key: 'titlePosition', type: 'select' },
         };
         Object.entries(axisFields).forEach(([id, { key, type }]) => {
             const el = document.getElementById(id);
@@ -154,6 +157,10 @@
                 let val = e.target.value;
                 if (type === 'number') val = val === '' ? null : parseFloat(val);
                 AppState.subfigure.axisConfig[key] = val;
+                // 标题位置选择器切换时显示/隐藏手动滑块
+                if (id === 'axis-title-position') {
+                    updateTitleLeftRowVisibility();
+                }
                 refreshChart();
             });
         });
@@ -174,6 +181,22 @@
             AppState.subfigure.axisConfig.showYTicks = e.target.checked;
             refreshChart();
         });
+        document.getElementById('axis-title-left')?.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            AppState.subfigure.axisConfig.titleLeft = val + '%';
+            document.getElementById('title-left-display').textContent = val + '%';
+            refreshChart();
+        });
+
+        // 恢复标题自动位置
+        document.getElementById('btn-title-auto-pos')?.addEventListener('click', () => {
+            AppState.subfigure.axisConfig.titleLeft = null;
+            const slider = document.getElementById('axis-title-left');
+            if (slider) slider.value = 50;
+            document.getElementById('title-left-display').textContent = '50%';
+            refreshChart();
+        });
+
         document.getElementById('btn-axis-reset')?.addEventListener('click', () => {
             AppState.subfigure.axisConfig = {
                 title: '', xLabel: '', yLabel: '',
@@ -181,6 +204,7 @@
                 xScale: 'value', yScale: 'value',
                 showGrid: true, showXTicks: true, showYTicks: true,
                 titleShow: true, titlePosition: 'center',
+                titleLeft: null,
             };
             syncAxisUI();
             refreshChart();
@@ -404,6 +428,30 @@
         setChk('axis-show-grid', cfg.showGrid);
         setChk('axis-show-x-ticks', cfg.showXTicks);
         setChk('axis-show-y-ticks', cfg.showYTicks);
+
+        // 同步手动标题位置控件的显示
+        const titleLeftRow = document.getElementById('axis-title-left-row');
+        const btnAutoPosRow = document.getElementById('btn-title-auto-pos-row');
+        if (titleLeftRow) titleLeftRow.style.display = (cfg.titlePosition === 'manual') ? '' : 'none';
+        if (btnAutoPosRow) btnAutoPosRow.style.display = (cfg.titlePosition === 'manual') ? '' : 'none';
+        const titleLeftSlider = document.getElementById('axis-title-left');
+        const titleLeftDisplay = document.getElementById('title-left-display');
+        if (titleLeftSlider && titleLeftDisplay) {
+            const tl = cfg.titleLeft;
+            if (tl != null) {
+                const val = parseInt(tl);
+                titleLeftSlider.value = isNaN(val) ? 50 : val;
+                titleLeftDisplay.textContent = (isNaN(val) ? 50 : val) + '%';
+            }
+        }
+
+        // 同步画布比例选择器
+        const aspectSelect = document.getElementById('sub-aspect-ratio');
+        if (aspectSelect) aspectSelect.value = AppState.subfigure.aspectRatio || '16:9';
+        const customWRow = document.getElementById('sub-custom-size-row');
+        const customHRow = document.getElementById('sub-custom-height-row');
+        if (customWRow) customWRow.style.display = (AppState.subfigure.aspectRatio === 'custom') ? 'block' : 'none';
+        if (customHRow) customHRow.style.display = (AppState.subfigure.aspectRatio === 'custom') ? 'block' : 'none';
     }
 
     function updateErrorBarVisibility() {
@@ -439,15 +487,31 @@
         }
     }
 
+    function updateTitleLeftRowVisibility() {
+        const isManual = AppState.subfigure.axisConfig.titlePosition === 'manual';
+        const titleLeftRow = document.getElementById('axis-title-left-row');
+        const btnAutoPosRow = document.getElementById('btn-title-auto-pos-row');
+        if (titleLeftRow) titleLeftRow.style.display = isManual ? '' : 'none';
+        if (btnAutoPosRow) btnAutoPosRow.style.display = isManual ? '' : 'none';
+    }
+
     function applyAxisConfig(option) {
         const cfg = AppState.subfigure.axisConfig;
 
-        if (cfg.titleShow && cfg.title) {
-            option.title = {
-                text: cfg.title,
-                left: cfg.titlePosition,
-                textStyle: { fontSize: AppState.subfigure.fontSize + 4 },
-            };
+        if (cfg.titleShow) {
+            const titleLeft = cfg.titlePosition === 'manual' && cfg.titleLeft != null
+                ? cfg.titleLeft
+                : cfg.titlePosition;
+            if (option.title) {
+                option.title.left = titleLeft;
+                if (cfg.title) option.title.text = cfg.title;
+            } else {
+                option.title = {
+                    text: cfg.title,
+                    left: titleLeft,
+                    textStyle: { fontSize: AppState.subfigure.fontSize + 4 },
+                };
+            }
         } else if (!cfg.titleShow) {
             option.title = { show: false };
         }
@@ -546,7 +610,7 @@
 
         applyAxisConfig(option);
 
-        // 应用手动设置的系列颜色
+        // 应用手动设置的系列颜色（按 series.name 匹配）
         if (option.series && AppState.subfigure.customSeriesColors) {
             option.series.forEach(s => {
                 if (s.name && AppState.subfigure.customSeriesColors[s.name]) {
@@ -554,6 +618,19 @@
                     if (!s.itemStyle) s.itemStyle = {};
                     s.itemStyle.color = customColor;
                     if (s.lineStyle) s.lineStyle.color = customColor;
+                }
+                // 对 pie/radar 等单 series 多数据项图表，按 data[i].name 匹配颜色
+                if (s.data && Array.isArray(s.data)) {
+                    s.data.forEach(d => {
+                        const itemName = d && d.name;
+                        if (itemName && AppState.subfigure.customSeriesColors[itemName]) {
+                            const customColor = AppState.subfigure.customSeriesColors[itemName];
+                            if (typeof d === 'object' && d !== null) {
+                                if (!d.itemStyle) d.itemStyle = {};
+                                d.itemStyle.color = customColor;
+                            }
+                        }
+                    });
                 }
             });
         }
@@ -581,6 +658,7 @@
 
         // 更新系列颜色微调面板
         updateSeriesColorsPanel();
+        updateLegendPanel();
     }
 
     // ===== 绘图工具 =====
@@ -973,6 +1051,188 @@
         // 同步单系列多色开关
         const cb = document.getElementById('use-data-point-colors');
         if (cb) cb.checked = !!AppState.subfigure.useDataPointColors;
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // ===== 图例控制面板 =====
+
+    let selectedLegendItem = null;
+
+    function initLegendPanel() {
+        // 颜色修改
+        document.getElementById('legend-editor-color')?.addEventListener('input', (e) => {
+            if (!selectedLegendItem) return;
+            if (!AppState.subfigure.customSeriesColors) {
+                AppState.subfigure.customSeriesColors = {};
+            }
+            AppState.subfigure.customSeriesColors[selectedLegendItem] = e.target.value;
+            refreshChart();
+        });
+
+        // 字体修改
+        document.getElementById('legend-editor-font-family')?.addEventListener('change', (e) => {
+            if (!selectedLegendItem) return;
+            AppState.subfigure.fontFamily = e.target.value;
+            refreshChart();
+        });
+
+        // 字号修改
+        document.getElementById('legend-editor-font-size')?.addEventListener('input', (e) => {
+            if (!selectedLegendItem) return;
+            AppState.subfigure.fontSize = parseInt(e.target.value);
+            refreshChart();
+        });
+    }
+
+    function updateLegendPanel() {
+        const container = document.getElementById('legend-items-container');
+        const emptyTip = document.getElementById('legend-empty-tip');
+        const editor = document.getElementById('legend-item-editor');
+        if (!container) return;
+
+        const option = chartInstance.getOption();
+        const legend = option.legend?.[0] || option.legend;
+
+        // 没有图例时显示空提示
+        if (!legend) {
+            container.innerHTML = '';
+            if (emptyTip) emptyTip.style.display = '';
+            if (editor) editor.style.display = 'none';
+            selectedLegendItem = null;
+            return;
+        }
+        if (emptyTip) emptyTip.style.display = 'none';
+
+        // 获取当前选中状态
+        const selectedMap = legend.selected || {};
+
+        // 图例条目来源：legend.data > 从 series/data 提取
+        // 严格只显示 ECharts 会渲染在图例上的条目，过滤辅助 series
+        let legendData = [];
+        if (legend.data && legend.data.length) {
+            legendData = legend.data;
+        } else {
+            const isAuxSeries = (name) => {
+                return name === 'base' || name === '连接线' || name === '误差棒' ||
+                    name.includes('误差') || name.includes('趋势线') ||
+                    name.endsWith('_left') || name.endsWith('_right');
+            };
+
+            // 对于 pie/radar 等单 series 多数据项图表，从 data[].name 提取
+            const firstSeries = option.series?.[0];
+            if (firstSeries && firstSeries.data && Array.isArray(firstSeries.data) &&
+                firstSeries.data.some(d => d && d.name)) {
+                legendData = firstSeries.data
+                    .filter(d => d && d.name && !isAuxSeries(d.name))
+                    .map(d => d.name);
+            } else {
+                // 标准图表：从 series[].name 提取
+                legendData = (option.series || [])
+                    .filter(s => s.name && !isAuxSeries(s.name))
+                    .map(s => s.name);
+            }
+        }
+
+        // 去重并过滤空值
+        legendData = [...new Set(legendData)].filter(n => n != null && n !== '');
+
+        if (legendData.length === 0) {
+            container.innerHTML = '';
+            if (emptyTip) emptyTip.style.display = '';
+            if (editor) editor.style.display = 'none';
+            selectedLegendItem = null;
+            return;
+        }
+
+        // 渲染列表
+        container.innerHTML = '';
+        legendData.forEach(name => {
+            const item = document.createElement('div');
+            item.className = 'column-checkitem';
+            item.dataset.name = name;
+
+            const isChecked = selectedMap[name] !== false;
+            const isActive = selectedLegendItem === name;
+            if (isActive) item.classList.add('active');
+
+            item.innerHTML = `
+                <input type="checkbox" ${isChecked ? 'checked' : ''} style="cursor:pointer;">
+                <span style="flex:1; font-size:13px; cursor:pointer; user-select:none;">${escapeHtml(name)}</span>
+            `;
+
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            const labelSpan = item.querySelector('span');
+
+            // 复选框切换可见性（阻止冒泡避免触发 item 的 click）
+            checkbox.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            checkbox.addEventListener('change', () => {
+                chartInstance.dispatchAction({
+                    type: 'legendToggleSelect',
+                    name: name,
+                });
+            });
+
+            // 点击文字区域选中条目
+            labelSpan.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectLegendItem(name);
+            });
+
+            // 点击条目空白区域也选中条目
+            item.addEventListener('click', () => {
+                selectLegendItem(name);
+            });
+
+            container.appendChild(item);
+        });
+
+        // 如果之前有选中的条目，刷新编辑器显示
+        if (selectedLegendItem && legendData.includes(selectedLegendItem)) {
+            selectLegendItem(selectedLegendItem);
+        } else {
+            selectedLegendItem = null;
+            if (editor) editor.style.display = 'none';
+            container.querySelectorAll('.column-checkitem').forEach(el => el.classList.remove('active'));
+        }
+    }
+
+    function selectLegendItem(name) {
+        selectedLegendItem = name;
+
+        // 高亮列表项
+        const container = document.getElementById('legend-items-container');
+        container?.querySelectorAll('.column-checkitem').forEach(el => {
+            el.classList.toggle('active', el.dataset.name === name);
+        });
+
+        // 显示并填充编辑器
+        const editor = document.getElementById('legend-item-editor');
+        const nameSpan = document.getElementById('legend-editor-series-name');
+        const colorInput = document.getElementById('legend-editor-color');
+        const fontSelect = document.getElementById('legend-editor-font-family');
+        const sizeInput = document.getElementById('legend-editor-font-size');
+        if (!editor) return;
+
+        editor.style.display = '';
+        if (nameSpan) nameSpan.textContent = name;
+
+        // 读取当前颜色
+        const customColor = AppState.subfigure.customSeriesColors?.[name];
+        const scheme = getColorScheme(AppState.subfigure.colorScheme);
+        if (colorInput) {
+            colorInput.value = customColor || scheme.colors[0] || '#999999';
+        }
+
+        // 字体/字号：从全局取默认值
+        if (fontSelect) fontSelect.value = AppState.subfigure.fontFamily;
+        if (sizeInput) sizeInput.value = AppState.subfigure.fontSize;
     }
 
     function initSeriesColorsPanel() {
