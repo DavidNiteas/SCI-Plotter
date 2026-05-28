@@ -603,21 +603,22 @@
                                 <div class="form-row">
                                     <label>配色方案</label>
                                     <select class="form-select" id="color-scheme">
-                                        <option value="academic">学术蓝</option>
-                                        <option value="nature">Nature</option>
-                                        <option value="science">Science</option>
-                                        <option value="cell">Cell</option>
-                                        <option value="lancet">Lancet</option>
-                                        <option value="jama">JAMA</option>
-                                        <option value="viridis">Viridis</option>
-                                        <option value="seaborn">Seaborn</option>
-                                        <option value="tableau10">Tableau 10</option>
-                                        <option value="okabe_ito">Okabe-Ito (色盲友好)</option>
-                                        <option value="warm">暖色</option>
-                                        <option value="cool">冷色</option>
-                                        <option value="pastel">柔和色</option>
-                                        <option value="monochrome">黑白</option>
+                                        <!-- 动态生成 -->
                                     </select>
+                                </div>
+                                <div class="form-row">
+                                    <button class="btn btn-sm btn-secondary" id="btn-manage-palettes" type="button">管理自定义配色</button>
+                                </div>
+                                <div class="form-row">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="use-data-point-colors">
+                                        <span>单系列数据点使用不同颜色</span>
+                                    </label>
+                                </div>
+                                <div class="form-row" id="series-colors-row" style="display:none;">
+                                    <label>系列颜色微调</label>
+                                    <div id="series-colors-container" class="series-colors-list"></div>
+                                    <button class="btn btn-sm btn-text" id="btn-reset-series-colors" type="button">重置为配色方案默认</button>
                                 </div>
                                 <div class="form-row">
                                     <label>字体</label>
@@ -1098,6 +1099,76 @@
     </div>
 
     <a id="download-link" style="display:none"></a>
+
+    <!-- 配色编辑器 Modal -->
+    <div id="palette-editor-modal" class="modal-overlay hidden">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h3>自定义配色编辑器</h3>
+                <button class="modal-close" id="palette-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <label>配色名称</label>
+                    <input type="text" class="form-input" id="palette-name" placeholder="输入配色名称">
+                </div>
+                <div class="form-row">
+                    <label>基于预设</label>
+                    <select class="form-select" id="palette-base">
+                        <option value="academic">学术蓝</option>
+                        <option value="nature">Nature</option>
+                        <option value="science">Science</option>
+                        <option value="cell">Cell</option>
+                        <option value="lancet">Lancet</option>
+                        <option value="jama">JAMA</option>
+                        <option value="viridis">Viridis</option>
+                        <option value="seaborn">Seaborn</option>
+                        <option value="tableau10">Tableau 10</option>
+                        <option value="okabe_ito">Okabe-Ito (色盲友好)</option>
+                        <option value="warm">暖色</option>
+                        <option value="cool">冷色</option>
+                        <option value="pastel">柔和色</option>
+                        <option value="monochrome">黑白</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>主色列表 <span class="text-muted">(2-12个)</span></label>
+                    <div id="palette-colors-container" class="palette-colors-grid"></div>
+                    <div class="palette-actions">
+                        <button class="btn btn-sm btn-secondary" id="btn-add-palette-color" type="button">+ 添加颜色</button>
+                        <button class="btn btn-sm btn-text" id="btn-remove-palette-color" type="button">- 移除最后一个</button>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label>辅助色</label>
+                    <div class="aux-color-row">
+                        <div class="aux-color-item">
+                            <span class="aux-color-label">背景</span>
+                            <input type="color" id="palette-bg-color" value="#ffffff">
+                        </div>
+                        <div class="aux-color-item">
+                            <span class="aux-color-label">文字</span>
+                            <input type="color" id="palette-text-color" value="#1f2937">
+                        </div>
+                        <div class="aux-color-item">
+                            <span class="aux-color-label">网格</span>
+                            <input type="color" id="palette-grid-color" value="#e5e7eb">
+                        </div>
+                    </div>
+                </div>
+                <div class="palette-preview-bar" id="palette-preview-bar"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-import-palette" type="button">导入JSON</button>
+                <button class="btn btn-secondary" id="btn-export-palette" type="button">导出JSON</button>
+                <div class="modal-footer-spacer"></div>
+                <button class="btn btn-danger" id="btn-delete-palette" type="button">删除此配色</button>
+                <button class="btn btn-primary" id="btn-save-palette" type="button">保存为新配色</button>
+                <button class="btn btn-primary" id="btn-update-palette" type="button">更新当前配色</button>
+            </div>
+        </div>
+    </div>
+    <input type="file" id="palette-import-file" accept=".json" style="display:none">
 
     <!-- 脚本 -->
     <script src="js/state.js"></script>

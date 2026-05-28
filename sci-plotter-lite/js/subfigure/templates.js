@@ -533,7 +533,7 @@ const ChartTemplates = {
                 left: 'center',
                 bottom: 10,
                 inRange: {
-                    color: ['#f0f9ff', '#bae6fd', '#7dd3fc', '#38bdf8', '#0ea5e9', '#0284c7'],
+                    color: generateGradientFromScheme(config.colorScheme || 'academic', 6),
                 },
             },
             series: [{
@@ -1225,7 +1225,7 @@ const ChartTemplates = {
                 left: 'center',
                 bottom: 10,
                 inRange: {
-                    color: ['#2166ac', '#67a9cf', '#d1e5f0', '#f7f7f7', '#fddbc7', '#ef8a62', '#b2182b'],
+                    color: generateDivergingGradient(config.colorScheme || 'academic', 7),
                 },
             },
             series: [{
@@ -1501,7 +1501,7 @@ const ChartTemplates = {
                     type: 'bar',
                     stack: 'waterfall',
                     data: increaseData,
-                    itemStyle: { color: '#52c41a' },
+                    itemStyle: { color: getColorScheme(config.colorScheme || 'academic').colors[0] || '#52c41a' },
                     barMaxWidth: 40,
                 },
                 {
@@ -1509,7 +1509,7 @@ const ChartTemplates = {
                     type: 'bar',
                     stack: 'waterfall',
                     data: decreaseData,
-                    itemStyle: { color: '#ff4d4f' },
+                    itemStyle: { color: getColorScheme(config.colorScheme || 'academic').colors[1] || '#ff4d4f' },
                     barMaxWidth: 40,
                 },
             ],
@@ -1603,7 +1603,7 @@ const ChartTemplates = {
                         return {
                             type: 'line',
                             shape: { x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1] },
-                            style: { stroke: '#999', lineWidth: 2 },
+                            style: { stroke: getColorScheme(config.colorScheme || 'academic').grid || '#999', lineWidth: 2 },
                             silent: true,
                         };
                     },
@@ -1742,7 +1742,7 @@ const ChartTemplates = {
     _buildErrorBarSeries(errorDataXY, coordSys, color) {
         if (!errorDataXY || errorDataXY.length === 0) return null;
 
-        const errColor = color || '#333';
+        const errColor = color || getColorScheme(AppState?.subfigure?.colorScheme || 'academic').text || '#333';
 
         return {
             type: 'custom',
@@ -2150,5 +2150,11 @@ function renderChart(templateName, data, config) {
     if (!fn) {
         return ChartTemplates._errorOption(`未知模板: ${templateName}`);
     }
-    return fn.call(ChartTemplates, data, config);
+    // 注入配色相关信息
+    const enrichedConfig = {
+        ...config,
+        colorScheme: AppState?.subfigure?.colorScheme || 'academic',
+        customSeriesColors: AppState?.subfigure?.customSeriesColors || {},
+    };
+    return fn.call(ChartTemplates, data, enrichedConfig);
 }

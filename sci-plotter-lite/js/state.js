@@ -78,7 +78,13 @@ const AppState = {
             degree: 2,
         },
         significanceAnnotations: [],
+        useDataPointColors: false,    // 单系列数据点使用不同颜色
+        customSeriesColors: {},       // 手动覆盖的系列颜色 { seriesName: color }
     },
+
+    // ===== 自定义配色 =====
+    customPalettes: {},       // { id: { id, name, colors[], background, text, grid, createdAt } }
+    customPaletteCounter: 0,
 
     // ===== 主图状态 =====
     mainfigure: {
@@ -99,6 +105,24 @@ const AppState = {
     snapshots: [],
     snapshotCounter: 0,
 };
+
+// 初始化时从 localStorage 恢复自定义配色（Lite 模式）
+(function initCustomPalettes() {
+    try {
+        const saved = localStorage.getItem('sci_plotter_custom_palettes');
+        if (saved) {
+            const data = JSON.parse(saved);
+            if (data.customPalettes) {
+                AppState.customPalettes = data.customPalettes;
+            }
+            if (data.customPaletteCounter) {
+                AppState.customPaletteCounter = data.customPaletteCounter;
+            }
+        }
+    } catch (e) {
+        console.warn('恢复自定义配色失败:', e);
+    }
+})();
 
 // ===== 数据表管理 =====
 
@@ -208,7 +232,11 @@ function exportWorkspace() {
             errorBar: AppState.subfigure.errorBar,
             trendLine: AppState.subfigure.trendLine,
             significanceAnnotations: AppState.subfigure.significanceAnnotations,
+            useDataPointColors: AppState.subfigure.useDataPointColors,
+            customSeriesColors: AppState.subfigure.customSeriesColors,
         },
+        customPalettes: AppState.customPalettes,
+        customPaletteCounter: AppState.customPaletteCounter,
         mainfigure: {
             width: AppState.mainfigure.width,
             height: AppState.mainfigure.height,
@@ -248,6 +276,17 @@ function importWorkspace(data) {
     if (data.mainfigure) Object.assign(AppState.mainfigure, data.mainfigure);
     if (data.snapshots) AppState.snapshots = data.snapshots;
     if (data.snapshotCounter) AppState.snapshotCounter = data.snapshotCounter;
+    if (data.customPalettes) AppState.customPalettes = data.customPalettes;
+    if (data.customPaletteCounter) AppState.customPaletteCounter = data.customPaletteCounter;
+    // 保存到 localStorage（Lite 模式持久化）
+    try {
+        localStorage.setItem('sci_plotter_custom_palettes', JSON.stringify({
+            customPalettes: AppState.customPalettes,
+            customPaletteCounter: AppState.customPaletteCounter,
+        }));
+    } catch (e) {
+        console.warn('保存自定义配色到 localStorage 失败:', e);
+    }
 }
 
 function exportEditableFigure() {
@@ -292,6 +331,21 @@ function exportEditableFigure() {
         }
     });
 
+    // 收集被引用的自定义配色
+    const usedPaletteIds = new Set();
+    Object.values(figure.subfigures).forEach(s => {
+        const cs = s.data?.colorScheme;
+        if (cs && AppState.customPalettes[cs]) {
+            usedPaletteIds.add(cs);
+        }
+    });
+    if (usedPaletteIds.size > 0) {
+        figure.customPalettes = {};
+        usedPaletteIds.forEach(id => {
+            figure.customPalettes[id] = AppState.customPalettes[id];
+        });
+    }
+
     return figure;
 }
 
@@ -305,6 +359,9 @@ function importEditableFigure(data) {
                 AppState.snapshots.push(s);
             }
         });
+    }
+    if (data.customPalettes) {
+        Object.assign(AppState.customPalettes, data.customPalettes);
     }
     if (data.mainfigure) {
         AppState.mainfigure.width = data.mainfigure.width || 1200;

@@ -50,6 +50,12 @@
         updateTrendLinePanelVisibility();
         renderEmptyChart();
 
+        // 配色系统初始化
+        initColorSchemeSelect();
+        initPaletteEditor();
+        initSeriesColorsPanel();
+        syncColorSchemeUI();
+
         window.addEventListener('resize', () => chartInstance?.resize());
         window.addEventListener('tableschanged', () => {
             updateTableSelect();
@@ -246,6 +252,22 @@
             AppState.subfigure.trendLine.showR2 = e.target.checked;
             refreshChart();
         });
+
+        // 单系列多色开关
+        document.getElementById('use-data-point-colors')?.addEventListener('change', (e) => {
+            AppState.subfigure.useDataPointColors = e.target.checked;
+            refreshChart();
+        });
+
+        // 重置系列颜色
+        document.getElementById('btn-reset-series-colors')?.addEventListener('click', () => {
+            AppState.subfigure.customSeriesColors = {};
+            refreshChart();
+            updateSeriesColorsPanel();
+        });
+
+        // 管理自定义配色按钮
+        document.getElementById('btn-manage-palettes')?.addEventListener('click', openPaletteEditor);
     }
 
     function updateTableSelect() {
@@ -524,6 +546,28 @@
 
         applyAxisConfig(option);
 
+        // 应用手动设置的系列颜色
+        if (option.series && AppState.subfigure.customSeriesColors) {
+            option.series.forEach(s => {
+                if (s.name && AppState.subfigure.customSeriesColors[s.name]) {
+                    const customColor = AppState.subfigure.customSeriesColors[s.name];
+                    if (!s.itemStyle) s.itemStyle = {};
+                    s.itemStyle.color = customColor;
+                    if (s.lineStyle) s.lineStyle.color = customColor;
+                }
+            });
+        }
+
+        // 单系列数据点多色支持
+        const templatesSupportingDataPointColors = ['scatter', 'line', 'bar', 'area', 'histogram', 'boxplot', 'violin'];
+        if (AppState.subfigure.useDataPointColors &&
+            templatesSupportingDataPointColors.includes(AppState.subfigure.template) &&
+            option.series && option.series.length === 1) {
+            const s = option.series[0];
+            if (!s.itemStyle) s.itemStyle = {};
+            s.itemStyle.color = getDataPointColorCallback(AppState.subfigure.colorScheme, s.data?.length || 1);
+        }
+
         const graphics = buildGraphicElements();
         if (option._trendLineGraphic) {
             graphics.push(...option._trendLineGraphic);
@@ -534,6 +578,9 @@
         }
 
         chartInstance.setOption(option, true);
+
+        // 更新系列颜色微调面板
+        updateSeriesColorsPanel();
     }
 
     // ===== 绘图工具 =====
@@ -810,6 +857,8 @@
             errorBar: { ...AppState.subfigure.errorBar },
             trendLine: { ...AppState.subfigure.trendLine },
             significanceAnnotations: JSON.parse(JSON.stringify(AppState.subfigure.significanceAnnotations)),
+            useDataPointColors: AppState.subfigure.useDataPointColors,
+            customSeriesColors: { ...AppState.subfigure.customSeriesColors },
         };
     }
 
@@ -894,6 +943,325 @@
         });
     }
 
+    // ===== 配色系统 =====
+
+    function initColorSchemeSelect() {
+        const select = document.getElementById('color-scheme');
+        if (!select) return;
+        select.addEventListener('change', (e) => {
+            AppState.subfigure.colorScheme = e.target.value;
+            // 切换配色时重置系列颜色微调
+            AppState.subfigure.customSeriesColors = {};
+            refreshChart();
+        });
+    }
+
+    function syncColorSchemeUI() {
+        const select = document.getElementById('color-scheme');
+        if (!select) return;
+        const current = AppState.subfigure.colorScheme;
+        const allSchemes = getAllColorSchemes();
+        select.innerHTML = '';
+        Object.entries(allSchemes).forEach(([key, scheme]) => {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.textContent = scheme.name || key;
+            if (key === current) opt.selected = true;
+            select.appendChild(opt);
+        });
+
+        // 同步单系列多色开关
+        const cb = document.getElementById('use-data-point-colors');
+        if (cb) cb.checked = !!AppState.subfigure.useDataPointColors;
+    }
+
+    function initSeriesColorsPanel() {
+        updateSeriesColorsPanel();
+    }
+
+    function updateSeriesColorsPanel() {
+        const row = document.getElementById('series-colors-row');
+        const container = document.getElementById('series-colors-container');
+        if (!row || !container || !chartInstance) return;
+
+        // 获取当前 option 中的 series 名称
+        const option = chartInstance.getOption();
+        const seriesList = (option.series || []).filter(s => s.name && s.name !== 'base' && s.name !== '连接线');
+        if (seriesList.length === 0) {
+            row.style.display = 'none';
+            return;
+        }
+
+        row.style.display = '';
+        const scheme = getColorScheme(AppState.subfigure.colorScheme);
+        const colors = scheme.colors || ['#999999'];
+
+        container.innerHTML = seriesList.map((s, idx) => {
+            const name = s.name;
+            const currentColor = AppState.subfigure.customSeriesColors?.[name] || colors[idx % colors.length];
+            return `
+                <div class="series-color-item">
+                    <input type="color" value="${currentColor}" data-series-name="${name}">
+                    <span class="series-color-name">${name}</span>
+                </div>
+            `;
+        }).join('');
+
+        container.querySelectorAll('input[type="color"]').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const seriesName = e.target.dataset.seriesName;
+                if (!AppState.subfigure.customSeriesColors) {
+                    AppState.subfigure.customSeriesColors = {};
+                }
+                AppState.subfigure.customSeriesColors[seriesName] = e.target.value;
+                refreshChart();
+            });
+        });
+    }
+
+    // ===== 配色编辑器 =====
+
+    let currentEditingPaletteId = null;
+
+    function initPaletteEditor() {
+        const modal = document.getElementById('palette-editor-modal');
+        const closeBtn = document.getElementById('palette-modal-close');
+        const baseSelect = document.getElementById('palette-base');
+        const addColorBtn = document.getElementById('btn-add-palette-color');
+        const removeColorBtn = document.getElementById('btn-remove-palette-color');
+        const saveBtn = document.getElementById('btn-save-palette');
+        const updateBtn = document.getElementById('btn-update-palette');
+        const deleteBtn = document.getElementById('btn-delete-palette');
+        const exportBtn = document.getElementById('btn-export-palette');
+        const importBtn = document.getElementById('btn-import-palette');
+        const importFile = document.getElementById('palette-import-file');
+
+        closeBtn?.addEventListener('click', closePaletteEditor);
+        modal?.addEventListener('click', (e) => {
+            if (e.target === modal) closePaletteEditor();
+        });
+
+        baseSelect?.addEventListener('change', () => {
+            const base = getColorScheme(baseSelect.value);
+            renderPaletteColors(base.colors || ['#2563eb', '#3b82f6']);
+            document.getElementById('palette-bg-color').value = base.background || '#ffffff';
+            document.getElementById('palette-text-color').value = base.text || '#1f2937';
+            document.getElementById('palette-grid-color').value = base.grid || '#e5e7eb';
+            updatePalettePreview();
+        });
+
+        addColorBtn?.addEventListener('click', () => {
+            const container = document.getElementById('palette-colors-container');
+            const inputs = container.querySelectorAll('input[type="color"]');
+            if (inputs.length >= 12) {
+                Toast.warn('最多12个颜色');
+                return;
+            }
+            const lastColor = inputs.length > 0 ? inputs[inputs.length - 1].value : '#2563eb';
+            addPaletteColorInput(lastColor);
+            updatePalettePreview();
+        });
+
+        removeColorBtn?.addEventListener('click', () => {
+            const container = document.getElementById('palette-colors-container');
+            const inputs = container.querySelectorAll('input[type="color"]');
+            if (inputs.length <= 2) {
+                Toast.warn('最少需要2个颜色');
+                return;
+            }
+            inputs[inputs.length - 1].parentElement.remove();
+            updatePalettePreview();
+        });
+
+        saveBtn?.addEventListener('click', () => {
+            const name = document.getElementById('palette-name').value.trim();
+            if (!name) {
+                Toast.warn('请输入配色名称');
+                return;
+            }
+            const palette = createCustomPalette(name, 'academic');
+            applyPaletteFromEditor(palette.id);
+            Toast.success(`已保存自定义配色: ${name}`);
+            syncColorSchemeUI();
+            closePaletteEditor();
+        });
+
+        updateBtn?.addEventListener('click', () => {
+            if (!currentEditingPaletteId || !AppState.customPalettes[currentEditingPaletteId]) {
+                Toast.warn('请先选择一个自定义配色');
+                return;
+            }
+            const name = document.getElementById('palette-name').value.trim();
+            if (!name) {
+                Toast.warn('请输入配色名称');
+                return;
+            }
+            applyPaletteFromEditor(currentEditingPaletteId);
+            Toast.success('已更新自定义配色');
+            syncColorSchemeUI();
+            closePaletteEditor();
+        });
+
+        deleteBtn?.addEventListener('click', () => {
+            if (!currentEditingPaletteId || !AppState.customPalettes[currentEditingPaletteId]) {
+                Toast.warn('没有可删除的自定义配色');
+                return;
+            }
+            if (!confirm('确定要删除此自定义配色吗？')) return;
+            deleteCustomPalette(currentEditingPaletteId);
+            Toast.success('已删除自定义配色');
+            syncColorSchemeUI();
+            closePaletteEditor();
+        });
+
+        exportBtn?.addEventListener('click', () => {
+            if (!currentEditingPaletteId) {
+                Toast.warn('没有可导出的自定义配色');
+                return;
+            }
+            const data = exportCustomPalette(currentEditingPaletteId);
+            if (!data) {
+                Toast.warn('导出失败');
+                return;
+            }
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.getElementById('download-link');
+            a.href = url;
+            a.download = `palette_${currentEditingPaletteId}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            Toast.success('配色已导出为 JSON');
+        });
+
+        importBtn?.addEventListener('click', () => {
+            importFile?.click();
+        });
+
+        importFile?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    const palette = importCustomPalette(data);
+                    if (palette) {
+                        Toast.success(`已导入配色: ${palette.name}`);
+                        syncColorSchemeUI();
+                        openPaletteEditorFor(palette.id);
+                    } else {
+                        Toast.warn('导入失败：文件格式不正确');
+                    }
+                } catch (err) {
+                    Toast.warn('导入失败：' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            importFile.value = '';
+        });
+
+        // 监听颜色变化实时更新预览
+        document.getElementById('palette-colors-container')?.addEventListener('input', updatePalettePreview);
+        document.getElementById('palette-bg-color')?.addEventListener('input', updatePalettePreview);
+        document.getElementById('palette-text-color')?.addEventListener('input', updatePalettePreview);
+        document.getElementById('palette-grid-color')?.addEventListener('input', updatePalettePreview);
+    }
+
+    function openPaletteEditor() {
+        const modal = document.getElementById('palette-editor-modal');
+        if (!modal) return;
+
+        // 如果当前选中的是自定义配色，直接进入编辑模式
+        const currentScheme = AppState.subfigure.colorScheme;
+        if (AppState.customPalettes?.[currentScheme]) {
+            openPaletteEditorFor(currentScheme);
+            return;
+        }
+
+        currentEditingPaletteId = null;
+        document.getElementById('palette-name').value = '';
+        const base = getColorScheme('academic');
+        document.getElementById('palette-base').value = 'academic';
+        renderPaletteColors(base.colors || ['#2563eb', '#3b82f6']);
+        document.getElementById('palette-bg-color').value = base.background || '#ffffff';
+        document.getElementById('palette-text-color').value = base.text || '#1f2937';
+        document.getElementById('palette-grid-color').value = base.grid || '#e5e7eb';
+        updatePalettePreview();
+        updatePaletteEditorButtons();
+        modal.classList.remove('hidden');
+    }
+
+    function openPaletteEditorFor(paletteId) {
+        const modal = document.getElementById('palette-editor-modal');
+        const palette = AppState.customPalettes?.[paletteId];
+        if (!palette || !modal) return;
+        currentEditingPaletteId = paletteId;
+        document.getElementById('palette-name').value = palette.name || '';
+        renderPaletteColors(palette.colors || ['#2563eb']);
+        document.getElementById('palette-bg-color').value = palette.background || '#ffffff';
+        document.getElementById('palette-text-color').value = palette.text || '#1f2937';
+        document.getElementById('palette-grid-color').value = palette.grid || '#e5e7eb';
+        // 编辑模式不修改"基于预设"选择器
+        updatePalettePreview();
+        updatePaletteEditorButtons();
+        modal.classList.remove('hidden');
+    }
+
+    function closePaletteEditor() {
+        const modal = document.getElementById('palette-editor-modal');
+        if (modal) modal.classList.add('hidden');
+        currentEditingPaletteId = null;
+    }
+
+    function renderPaletteColors(colors) {
+        const container = document.getElementById('palette-colors-container');
+        if (!container) return;
+        container.innerHTML = '';
+        (colors || []).forEach(c => addPaletteColorInput(c));
+    }
+
+    function addPaletteColorInput(color) {
+        const container = document.getElementById('palette-colors-container');
+        if (!container) return;
+        const div = document.createElement('div');
+        div.className = 'palette-color-item';
+        div.innerHTML = `<input type="color" value="${color}">`;
+        container.appendChild(div);
+    }
+
+    function updatePalettePreview() {
+        const container = document.getElementById('palette-preview-bar');
+        if (!container) return;
+        const colors = getPaletteColorsFromEditor();
+        container.innerHTML = colors.map(c => `<div class="palette-preview-segment" style="background:${c}"></div>`).join('');
+    }
+
+    function getPaletteColorsFromEditor() {
+        const container = document.getElementById('palette-colors-container');
+        if (!container) return [];
+        return Array.from(container.querySelectorAll('input[type="color"]')).map(i => i.value);
+    }
+
+    function applyPaletteFromEditor(paletteId) {
+        const colors = getPaletteColorsFromEditor();
+        const bg = document.getElementById('palette-bg-color')?.value || '#ffffff';
+        const text = document.getElementById('palette-text-color')?.value || '#1f2937';
+        const grid = document.getElementById('palette-grid-color')?.value || '#e5e7eb';
+        const name = document.getElementById('palette-name')?.value.trim() || '未命名配色';
+        updateCustomPalette(paletteId, { name, colors, background: bg, text, grid });
+    }
+
+    function updatePaletteEditorButtons() {
+        const saveBtn = document.getElementById('btn-save-palette');
+        const updateBtn = document.getElementById('btn-update-palette');
+        const deleteBtn = document.getElementById('btn-delete-palette');
+        const isEditing = !!currentEditingPaletteId;
+        if (saveBtn) saveBtn.style.display = isEditing ? 'none' : '';
+        if (updateBtn) updateBtn.style.display = isEditing ? '' : 'none';
+        if (deleteBtn) deleteBtn.style.display = isEditing ? '' : 'none';
+    }
+
     window.SubfigureEditor = {
         init,
         refreshChart,
@@ -903,6 +1271,7 @@
         applyAspectRatio,
         syncAxisUI,
         updateTrendLinePanelVisibility,
+        syncColorSchemeUI,
     };
 
     if (document.readyState === 'loading') {

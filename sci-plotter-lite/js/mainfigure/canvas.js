@@ -700,6 +700,8 @@
                     AppState.subfigure.aspectRatio = subfigureData.aspectRatio || '4:3';
                     AppState.subfigure.customWidth = subfigureData.customWidth || 600;
                     AppState.subfigure.customHeight = subfigureData.customHeight || 450;
+                    AppState.subfigure.useDataPointColors = subfigureData.useDataPointColors || false;
+                    AppState.subfigure.customSeriesColors = subfigureData.customSeriesColors || {};
 
                     // 检查源数据表是否存在
                     const sourceTable = getTable(subfigureData.selectedTableId);
@@ -717,8 +719,7 @@
                     document.querySelector(`#template-grid .template-card[data-template="${AppState.subfigure.template}"]`)?.classList.add('active');
 
                     // 更新样式选择器
-                    const colorSelect = document.getElementById('color-scheme');
-                    if (colorSelect) colorSelect.value = AppState.subfigure.colorScheme;
+                    SubfigureEditor?.syncColorSchemeUI();
                     const fontSelect = document.getElementById('font-family');
                     if (fontSelect) fontSelect.value = AppState.subfigure.fontFamily;
                     const fontSizeInput = document.getElementById('font-size');
