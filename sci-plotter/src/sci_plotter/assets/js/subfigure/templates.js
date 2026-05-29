@@ -314,7 +314,11 @@ const ChartTemplates = {
                 data: xAxisData,
                 boundaryGap: false,
             },
-            yAxis: { type: 'value' },
+            yAxis: {
+                type: 'value',
+                min: yMin,
+                max: yMax,
+            },
             series,
             grid: { left: 60, right: 40, top: 80, bottom: 50 },
             animation: false,
@@ -402,7 +406,11 @@ const ChartTemplates = {
                 type: 'category',
                 data: xAxisData,
             },
-            yAxis: { type: 'value' },
+            yAxis: {
+                type: 'value',
+                min: yMin,
+                max: yMax,
+            },
             series,
             grid: { left: 60, right: 40, top: 80, bottom: 50 },
             animation: false,
@@ -467,6 +475,11 @@ const ChartTemplates = {
                 data: boxData,
                 itemStyle: { borderWidth: 2 },
             }],
+            legend: {
+                top: 32,
+                data: ['增加', '减少'],
+                textStyle: { fontSize: config.fontSize - 2 },
+            },
             grid: { left: 60, right: 40, top: 60, bottom: 60 },
             animation: false,
         };
@@ -533,7 +546,7 @@ const ChartTemplates = {
                 left: 'center',
                 bottom: 10,
                 inRange: {
-                    color: ['#f0f9ff', '#bae6fd', '#7dd3fc', '#38bdf8', '#0ea5e9', '#0284c7'],
+                    color: generateGradientFromScheme(config.colorScheme || 'academic', 6),
                 },
             },
             series: [{
@@ -1225,7 +1238,7 @@ const ChartTemplates = {
                 left: 'center',
                 bottom: 10,
                 inRange: {
-                    color: ['#2166ac', '#67a9cf', '#d1e5f0', '#f7f7f7', '#fddbc7', '#ef8a62', '#b2182b'],
+                    color: generateDivergingGradient(config.colorScheme || 'academic', 7),
                 },
             },
             series: [{
@@ -1287,90 +1300,96 @@ const ChartTemplates = {
             const min = sorted[0];
             const max = sorted[sorted.length - 1];
             const range = max - min || 1;
-            const bandwidth = 1.06 * Math.sqrt(values.reduce((s, v) => s + (v - values.reduce((a, b) => a + b, 0) / values.length) ** 2, 0) / values.length) * Math.pow(values.length, -0.2) || range / 10;
+            const mean = values.reduce((a, b) => a + b, 0) / values.length;
+            const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / values.length;
+            const stdDev = Math.sqrt(variance);
+            const bandwidth = 1.06 * stdDev * Math.pow(values.length, -0.2) || range / 10;
             const step = range * 1.2 / nPoints;
             const start = min - range * 0.1;
             const points = [];
+            const coeff = 1 / (bandwidth * Math.sqrt(2 * Math.PI));
             for (let i = 0; i <= nPoints; i++) {
                 const x = start + i * step;
                 let density = 0;
-                values.forEach(v => {
-                    const z = (x - v) / bandwidth;
-                    density += Math.exp(-0.5 * z * z) / (bandwidth * Math.sqrt(2 * Math.PI));
-                });
-                density /= values.length;
+                for (let j = 0; j < values.length; j++) {
+                    const z = (x - values[j]) / bandwidth;
+                    density += Math.exp(-0.5 * z * z);
+                }
+                density = density * coeff / values.length;
                 points.push([x, density]);
             }
             return points;
         };
 
+        const scheme = getColorScheme(config.colorScheme || 'academic');
+        const colors = scheme.colors || ['#999999'];
         const series = [];
         const bandWidth = 0.35;
 
-        violinGroups.forEach((values, catIdx) => {
+        let globalKdeMin = Infinity;
+        let globalKdeMax = -Infinity;
+
+        // 第一遍：计算所有 violin 的 KDE 及全局范围
+        const violinDefs = violinGroups.map((values, catIdx) => {
             const boxData = this._computeBoxplotData(values);
             const densityPoints = kde(values, 50);
             const maxDensity = Math.max(...densityPoints.map(p => p[1])) || 1;
+            const color = colors[catIdx % colors.length];
 
-            const upperData = densityPoints.map(p => {
-                const normalizedWidth = (p[1] / maxDensity) * bandWidth;
-                return [catIdx - normalizedWidth, p[0]];
-            });
-            const lowerData = densityPoints.map(p => {
-                const normalizedWidth = (p[1] / maxDensity) * bandWidth;
-                return [catIdx + normalizedWidth, p[0]];
-            });
+            globalKdeMin = Math.min(globalKdeMin, densityPoints[0][0]);
+            globalKdeMax = Math.max(globalKdeMax, densityPoints[densityPoints.length - 1][0]);
 
+            // 构建闭合轮廓数据线（顶部中心 → 左轮廓上→下 → 底部中心 → 右轮廓下→上 → 回到顶部中心）
+            const contourData = [];
+            const yTop = densityPoints[densityPoints.length - 1][0];
+            const yBottom = densityPoints[0][0];
+
+            // 顶部中心
+            contourData.push([catIdx, yTop]);
+            // 左轮廓（上→下）
+            for (let i = densityPoints.length - 1; i >= 0; i--) {
+                const p = densityPoints[i];
+                const w = (p[1] / maxDensity) * bandWidth;
+                contourData.push([catIdx - w, p[0]]);
+            }
+            // 底部中心
+            contourData.push([catIdx, yBottom]);
+            // 右轮廓（下→上）
+            for (let i = 0; i < densityPoints.length; i++) {
+                const p = densityPoints[i];
+                const w = (p[1] / maxDensity) * bandWidth;
+                contourData.push([catIdx + w, p[0]]);
+            }
+            // 回到顶部中心，形成闭合环
+            contourData.push([catIdx, yTop]);
+
+            return { boxData, contourData, color, catIdx };
+        });
+
+        // 第二遍：生成 series
+        violinDefs.forEach(({ boxData, contourData, color, catIdx }) => {
+            // 小提琴轮廓：闭合 line + areaStyle 填充到 yAxis baseline
             series.push({
-                type: 'custom',
+                type: 'line',
                 name: categories[catIdx],
-                renderItem: (params, api) => {
-                    const catIdxVal = api.value(0);
-                    const yVal = api.value(1);
-                    const point = api.coord([catIdxVal, yVal]);
-                    return {
-                        type: 'circle',
-                        shape: { cx: point[0], cy: point[1], r: 0 },
-                    };
+                data: contourData,
+                smooth: false,
+                symbol: 'none',
+                lineStyle: { width: 1.5, color: color },
+                areaStyle: {
+                    color: color,
+                    opacity: 0.5,
+                    origin: 'start',
                 },
-                data: [[catIdx, 0]],
                 z: 1,
             });
 
-            series.push({
-                type: 'line',
-                name: categories[catIdx] + '_left',
-                data: upperData.map(p => [p[0], p[1]]),
-                smooth: true,
-                symbol: 'none',
-                lineStyle: { width: 1.5 },
-                areaStyle: { opacity: 0.2 },
-                xAxisIndex: 0,
-                yAxisIndex: 0,
-                z: 2,
-                silent: true,
-                tooltip: { show: false },
-            });
-            series.push({
-                type: 'line',
-                name: categories[catIdx] + '_right',
-                data: lowerData.map(p => [p[0], p[1]]),
-                smooth: true,
-                symbol: 'none',
-                lineStyle: { width: 1.5 },
-                areaStyle: { opacity: 0.2 },
-                xAxisIndex: 0,
-                yAxisIndex: 0,
-                z: 2,
-                silent: true,
-                tooltip: { show: false },
-            });
-
+            // 叠加箱线图
             series.push({
                 type: 'boxplot',
                 data: [[catIdx, boxData[0], boxData[1], boxData[2], boxData[3], boxData[4]]],
                 itemStyle: { borderWidth: 2, color: 'rgba(255,255,255,0.7)' },
-                boxWidth: ['10%', '10%'],
+                boxWidth: [10, 10],
                 z: 3,
                 tooltip: {
                     formatter: () => {
@@ -1379,6 +1398,9 @@ const ChartTemplates = {
                 },
             });
         });
+
+        const yMin = isFinite(globalKdeMin) ? globalKdeMin : 0;
+        const yMax = isFinite(globalKdeMax) ? globalKdeMax : 100;
 
         return {
             title: {
@@ -1501,7 +1523,7 @@ const ChartTemplates = {
                     type: 'bar',
                     stack: 'waterfall',
                     data: increaseData,
-                    itemStyle: { color: '#52c41a' },
+                    itemStyle: { color: getColorScheme(config.colorScheme || 'academic').colors[0] || '#52c41a' },
                     barMaxWidth: 40,
                 },
                 {
@@ -1509,10 +1531,15 @@ const ChartTemplates = {
                     type: 'bar',
                     stack: 'waterfall',
                     data: decreaseData,
-                    itemStyle: { color: '#ff4d4f' },
+                    itemStyle: { color: getColorScheme(config.colorScheme || 'academic').colors[1] || '#ff4d4f' },
                     barMaxWidth: 40,
                 },
             ],
+            legend: {
+                top: 32,
+                data: ['增加', '减少'],
+                textStyle: { fontSize: config.fontSize - 2 },
+            },
             grid: { left: 60, right: 40, top: 60, bottom: 60 },
             animation: false,
         };
@@ -1603,7 +1630,7 @@ const ChartTemplates = {
                         return {
                             type: 'line',
                             shape: { x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1] },
-                            style: { stroke: '#999', lineWidth: 2 },
+                            style: { stroke: getColorScheme(config.colorScheme || 'academic').grid || '#999', lineWidth: 2 },
                             silent: true,
                         };
                     },
@@ -1742,7 +1769,7 @@ const ChartTemplates = {
     _buildErrorBarSeries(errorDataXY, coordSys, color) {
         if (!errorDataXY || errorDataXY.length === 0) return null;
 
-        const errColor = color || '#333';
+        const errColor = color || getColorScheme(AppState?.subfigure?.colorScheme || 'academic').text || '#333';
 
         return {
             type: 'custom',
@@ -2150,5 +2177,21 @@ function renderChart(templateName, data, config) {
     if (!fn) {
         return ChartTemplates._errorOption(`未知模板: ${templateName}`);
     }
-    return fn.call(ChartTemplates, data, config);
+    // 注入配色相关信息
+    const enrichedConfig = {
+        ...config,
+        colorScheme: AppState?.subfigure?.colorScheme || 'academic',
+        customSeriesColors: AppState?.subfigure?.customSeriesColors || {},
+    };
+    const option = fn.call(ChartTemplates, data, enrichedConfig);
+
+    // 启用组件级点击事件，支持图上直接编辑
+    if (option.title) {
+        option.title.triggerEvent = true;
+    }
+    if (option.legend) {
+        option.legend.triggerEvent = true;
+    }
+
+    return option;
 }

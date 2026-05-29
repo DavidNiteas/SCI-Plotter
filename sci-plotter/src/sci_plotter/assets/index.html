@@ -43,6 +43,10 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     导出
                 </button>
+                <button class="btn btn-sm btn-icon" id="btn-layout-toggle" title="切换布局">
+                    <svg id="layout-icon-desktop" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    <svg id="layout-icon-mobile" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                </button>
             </div>
         </header>
 
@@ -603,21 +607,22 @@
                                 <div class="form-row">
                                     <label>配色方案</label>
                                     <select class="form-select" id="color-scheme">
-                                        <option value="academic">学术蓝</option>
-                                        <option value="nature">Nature</option>
-                                        <option value="science">Science</option>
-                                        <option value="cell">Cell</option>
-                                        <option value="lancet">Lancet</option>
-                                        <option value="jama">JAMA</option>
-                                        <option value="viridis">Viridis</option>
-                                        <option value="seaborn">Seaborn</option>
-                                        <option value="tableau10">Tableau 10</option>
-                                        <option value="okabe_ito">Okabe-Ito (色盲友好)</option>
-                                        <option value="warm">暖色</option>
-                                        <option value="cool">冷色</option>
-                                        <option value="pastel">柔和色</option>
-                                        <option value="monochrome">黑白</option>
+                                        <!-- 动态生成 -->
                                     </select>
+                                </div>
+                                <div class="form-row">
+                                    <button class="btn btn-sm btn-secondary" id="btn-manage-palettes" type="button">管理自定义配色</button>
+                                </div>
+                                <div class="form-row">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="use-data-point-colors">
+                                        <span>单系列数据点使用不同颜色</span>
+                                    </label>
+                                </div>
+                                <div class="form-row" id="series-colors-row" style="display:none;">
+                                    <label>系列颜色微调</label>
+                                    <div id="series-colors-container" class="series-colors-list"></div>
+                                    <button class="btn btn-sm btn-text" id="btn-reset-series-colors" type="button">重置为配色方案默认</button>
                                 </div>
                                 <div class="form-row">
                                     <label>字体</label>
@@ -631,6 +636,40 @@
                                 <div class="form-row">
                                     <label>字号</label>
                                     <input type="range" class="form-range" id="font-size" min="10" max="24" value="14">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel" id="panel-legend-control">
+                            <div class="panel-header">
+                                <span class="panel-title">图例控制</span>
+                            </div>
+                            <div class="panel-body">
+                                <div id="legend-items-container" class="column-checklist"></div>
+                                <div class="empty-tip" id="legend-empty-tip" style="display:none;">当前图表无图例</div>
+                                <div id="legend-item-editor" style="display:none; margin-top:10px;">
+                                    <div style="height:1px; background:var(--border-light); margin:10px 0;"></div>
+                                    <div class="form-row">
+                                        <span id="legend-editor-series-name" style="font-size:12px; font-weight:600; color:var(--text-primary);"></span>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>颜色</label>
+                                        <input type="color" id="legend-editor-color" class="form-input">
+                                    </div>
+                                    <div class="form-row-inline">
+                                        <div class="form-row-half">
+                                            <label>字体</label>
+                                            <select id="legend-editor-font-family" class="form-select">
+                                                <option value="Arial, sans-serif">Arial</option>
+                                                <option value="Times New Roman, serif">Times New Roman</option>
+                                                <option value="Helvetica, sans-serif">Helvetica</option>
+                                                <option value="Georgia, serif">Georgia</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-row-half">
+                                            <label>字号</label>
+                                            <input type="number" id="legend-editor-font-size" class="form-input" min="8" max="48" value="14">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -650,12 +689,20 @@
                                     </label>
                                 </div>
                                 <div class="form-row">
-                                    <label>标题位置</label>
+                                    <label>标题水平位置</label>
                                     <select class="form-select" id="axis-title-position">
                                         <option value="center">居中</option>
                                         <option value="left">左对齐</option>
                                         <option value="right">右对齐</option>
+                                        <option value="manual">手动拖动</option>
                                     </select>
+                                </div>
+                                <div class="form-row" id="axis-title-left-row" style="display:none;">
+                                    <label>标题水平偏移 <span id="title-left-display" class="text-muted">50%</span></label>
+                                    <input type="range" class="form-range" id="axis-title-left" min="0" max="100" value="50">
+                                </div>
+                                <div class="form-row" id="btn-title-auto-pos-row" style="display:none;">
+                                    <button class="btn btn-sm btn-text" id="btn-title-auto-pos" type="button">恢复自动位置</button>
                                 </div>
                                 <div class="form-row">
                                     <label>X 轴标签</label>
@@ -726,10 +773,21 @@
                         </div>
                         <div class="panel">
                             <div class="panel-header">
-                                <span class="panel-title">画布比例</span>
+                                <span class="panel-title">画布与布局</span>
                             </div>
                             <div class="panel-body">
                                 <div class="form-row">
+                                    <label>布局模式</label>
+                                    <select class="form-select" id="sub-layout-mode">
+                                        <option value="auto">Auto（自动布局）</option>
+                                        <option value="manual">Manual（手动布局）</option>
+                                    </select>
+                                </div>
+                                <div class="form-row layout-hint" id="layout-mode-hint">
+                                    <span class="text-muted" style="font-size:11px">Auto：布局由模板决定，可点击图表修改颜色和文本</span>
+                                </div>
+                                <div class="form-row">
+                                    <label>画布比例</label>
                                     <select class="form-select" id="sub-aspect-ratio">
                                         <option value="4:3">4:3</option>
                                         <option value="16:9">16:9</option>
@@ -746,15 +804,46 @@
                                     <label>高度 (px)</label>
                                     <input type="number" class="form-input" id="sub-custom-height" value="450" min="150" max="900">
                                 </div>
+                                <div class="form-row">
+                                    <label>画布缩放 <span id="sub-zoom-display" class="text-muted">100%</span></label>
+                                    <input type="range" class="form-range" id="sub-zoom-slider" min="50" max="200" value="100">
+                                </div>
+                                <div class="form-row">
+                                    <button class="btn btn-sm btn-text" id="btn-sub-zoom-reset" type="button">重置缩放</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </aside>
 
-                <div class="canvas-area">
-                    <div class="canvas-wrapper">
+                <div class="canvas-area" id="subfigure-canvas-area">
+                    <div class="canvas-wrapper" id="subfigure-canvas-wrapper">
                         <div id="subfigure-chart" class="chart-container"></div>
                     </div>
+                </div>
+
+                <!-- 浮动颜色/文本编辑工具栏 -->
+                <div id="subfigure-float-toolbar" class="float-toolbar hidden">
+                    <div class="float-toolbar-group">
+                        <input type="color" id="float-color-picker" title="修改颜色">
+                    </div>
+                    <div class="float-toolbar-divider"></div>
+                    <div class="float-toolbar-group">
+                        <input type="text" id="float-text-input" placeholder="文本内容" title="修改文本">
+                        <select id="float-font-family" title="字体">
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="Times New Roman, serif">Times New Roman</option>
+                            <option value="Helvetica, sans-serif">Helvetica</option>
+                            <option value="Georgia, serif">Georgia</option>
+                        </select>
+                        <input type="number" id="float-font-size" min="8" max="48" value="14" title="字号">
+                    </div>
+                    <div class="float-toolbar-divider"></div>
+                    <div class="float-toolbar-group" id="float-visibility-group" style="display:none;">
+                        <button class="btn btn-sm btn-secondary" id="float-toggle-visibility" type="button">隐藏</button>
+                    </div>
+                    <div class="float-toolbar-divider" id="float-visibility-divider" style="display:none;"></div>
+                    <button class="float-toolbar-close" id="float-toolbar-close" title="关闭">&times;</button>
                 </div>
 
                 <aside class="sidebar sidebar-right">
@@ -1098,6 +1187,76 @@
     </div>
 
     <a id="download-link" style="display:none"></a>
+
+    <!-- 配色编辑器 Modal -->
+    <div id="palette-editor-modal" class="modal-overlay hidden">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h3>自定义配色编辑器</h3>
+                <button class="modal-close" id="palette-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <label>配色名称</label>
+                    <input type="text" class="form-input" id="palette-name" placeholder="输入配色名称">
+                </div>
+                <div class="form-row">
+                    <label>基于预设</label>
+                    <select class="form-select" id="palette-base">
+                        <option value="academic">学术蓝</option>
+                        <option value="nature">Nature</option>
+                        <option value="science">Science</option>
+                        <option value="cell">Cell</option>
+                        <option value="lancet">Lancet</option>
+                        <option value="jama">JAMA</option>
+                        <option value="viridis">Viridis</option>
+                        <option value="seaborn">Seaborn</option>
+                        <option value="tableau10">Tableau 10</option>
+                        <option value="okabe_ito">Okabe-Ito (色盲友好)</option>
+                        <option value="warm">暖色</option>
+                        <option value="cool">冷色</option>
+                        <option value="pastel">柔和色</option>
+                        <option value="monochrome">黑白</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>主色列表 <span class="text-muted">(2-12个)</span></label>
+                    <div id="palette-colors-container" class="palette-colors-grid"></div>
+                    <div class="palette-actions">
+                        <button class="btn btn-sm btn-secondary" id="btn-add-palette-color" type="button">+ 添加颜色</button>
+                        <button class="btn btn-sm btn-text" id="btn-remove-palette-color" type="button">- 移除最后一个</button>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label>辅助色</label>
+                    <div class="aux-color-row">
+                        <div class="aux-color-item">
+                            <span class="aux-color-label">背景</span>
+                            <input type="color" id="palette-bg-color" value="#ffffff">
+                        </div>
+                        <div class="aux-color-item">
+                            <span class="aux-color-label">文字</span>
+                            <input type="color" id="palette-text-color" value="#1f2937">
+                        </div>
+                        <div class="aux-color-item">
+                            <span class="aux-color-label">网格</span>
+                            <input type="color" id="palette-grid-color" value="#e5e7eb">
+                        </div>
+                    </div>
+                </div>
+                <div class="palette-preview-bar" id="palette-preview-bar"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-import-palette" type="button">导入JSON</button>
+                <button class="btn btn-secondary" id="btn-export-palette" type="button">导出JSON</button>
+                <div class="modal-footer-spacer"></div>
+                <button class="btn btn-danger" id="btn-delete-palette" type="button">删除此配色</button>
+                <button class="btn btn-primary" id="btn-save-palette" type="button">保存为新配色</button>
+                <button class="btn btn-primary" id="btn-update-palette" type="button">更新当前配色</button>
+            </div>
+        </div>
+    </div>
+    <input type="file" id="palette-import-file" accept=".json" style="display:none">
 
     <!-- 脚本 -->
     <script src="js/state.js"></script>

@@ -3,6 +3,41 @@
  */
 
 (function() {
+    const LAYOUT_STORAGE_KEY = 'sci-plotter-layout';
+
+    function initLayout() {
+        const app = document.getElementById('app');
+        const btn = document.getElementById('btn-layout-toggle');
+        const iconDesktop = document.getElementById('layout-icon-desktop');
+        const iconMobile = document.getElementById('layout-icon-mobile');
+        if (!app || !btn) return;
+
+        const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
+        const isMobile = saved === 'mobile';
+        if (isMobile) {
+            app.classList.add('mobile-layout');
+        }
+        updateLayoutIcon(isMobile);
+
+        btn.addEventListener('click', () => {
+            const nowMobile = app.classList.toggle('mobile-layout');
+            localStorage.setItem(LAYOUT_STORAGE_KEY, nowMobile ? 'mobile' : 'desktop');
+            updateLayoutIcon(nowMobile);
+
+            // 触发图表重绘
+            setTimeout(() => {
+                AppState.subfigure.chartInstance?.resize();
+                AppState.mainfigure.fabricCanvas?.requestRenderAll?.();
+            }, 100);
+        });
+
+        function updateLayoutIcon(isMobile) {
+            if (iconDesktop) iconDesktop.style.display = isMobile ? 'none' : '';
+            if (iconMobile) iconMobile.style.display = isMobile ? '' : 'none';
+            btn.title = isMobile ? '切换到桌面布局' : '切换到手机布局';
+        }
+    }
+
     function init() {
         const caps = SciPloterBridge?.getCapabilities?.() || {};
         const edition = caps.fileSystem ? 'Desktop' : 'Lite';
@@ -18,6 +53,8 @@
         document.querySelectorAll('[data-desktop-only]').forEach(el => {
             el.style.display = caps.fileSystem ? '' : 'none';
         });
+
+        initLayout();
 
         if (window.DataManager) {
             DataManager.renderTableList();

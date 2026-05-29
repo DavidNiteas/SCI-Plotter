@@ -27,27 +27,65 @@
         });
     }
 
+    function generateUniqueTableName(baseName) {
+        const existingNames = new Set(AppState.tables.map(t => t.name));
+        if (!existingNames.has(baseName)) return baseName;
+        let counter = 1;
+        let candidate = `${baseName}-${counter}`;
+        while (existingNames.has(candidate)) {
+            counter++;
+            candidate = `${baseName}-${counter}`;
+        }
+        return candidate;
+    }
+
     function bindEvents() {
         document.getElementById('btn-import-csv')?.addEventListener('click', () => {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.csv,.txt';
+            input.multiple = true;
             input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                try {
-                    const data = await CSVParser.parseFile(file);
-                    const before = HistoryManager.captureTablesState();
-                    const table = createTable(file.name.replace(/\.[^.]+$/, ''), data.headers, data.rows, 'csv');
-                    activeTableId = table.id;
-                    AppState.activeTableId = table.id;
-                    const after = HistoryManager.captureTablesState();
-                    HistoryManager.push(HistoryManager.createTableAction(before, after, '导入 CSV: ' + table.name));
-                    renderTableList();
-                    renderGrid();
-                    window.dispatchEvent(new CustomEvent('tableschanged'));
-                } catch (err) {
-                    Toast.error('CSV 解析失败: ' + err.message);
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                const before = HistoryManager.captureTablesState();
+                const successNames = [];
+                const errors = [];
+                let lastTableId = null;
+
+                for (const file of files) {
+                    try {
+                        const data = await CSVParser.parseFile(file);
+                        const baseName = file.name.replace(/\.[^.]+$/, '');
+                        const tableName = generateUniqueTableName(baseName);
+                        const table = createTable(tableName, data.headers, data.rows, 'csv');
+                        lastTableId = table.id;
+                        successNames.push(table.name);
+                    } catch (err) {
+                        errors.push(`${file.name}: ${err.message}`);
+                    }
+                }
+
+                if (lastTableId) {
+                    activeTableId = lastTableId;
+                    AppState.activeTableId = lastTableId;
+                }
+
+                const after = HistoryManager.captureTablesState();
+                const desc = successNames.length === 1
+                    ? '导入 CSV: ' + successNames[0]
+                    : `批量导入 CSV（${successNames.length} 个文件）`;
+                HistoryManager.push(HistoryManager.createTableAction(before, after, desc));
+                renderTableList();
+                renderGrid();
+                window.dispatchEvent(new CustomEvent('tableschanged'));
+
+                if (successNames.length > 0) {
+                    Toast.success(desc);
+                }
+                if (errors.length > 0) {
+                    Toast.error('部分文件导入失败:\n' + errors.join('\n'));
                 }
             };
             input.click();
@@ -61,38 +99,58 @@
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.xlsx,.xls';
+            input.multiple = true;
             input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                try {
-                    const sheets = await XlsxHandler.parseFile(file);
-                    if (sheets.length === 0) {
-                        Toast.warning('文件中未找到有效数据');
-                        return;
-                    }
-                    const baseName = file.name.replace(/\.[^.]+$/, '');
-                    const before = HistoryManager.captureTablesState();
-                    sheets.forEach((sheet, idx) => {
-                        const tableName = sheets.length === 1
-                            ? baseName
-                            : `${baseName} - ${sheet.sheetName}`;
-                        const table = createTable(tableName, sheet.headers, sheet.rows, 'xlsx');
-                        if (idx === 0) {
-                            activeTableId = table.id;
-                            AppState.activeTableId = table.id;
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                const before = HistoryManager.captureTablesState();
+                let totalSheets = 0;
+                const successNames = [];
+                const errors = [];
+                let lastTableId = null;
+
+                for (const file of files) {
+                    try {
+                        const sheets = await XlsxHandler.parseFile(file);
+                        if (sheets.length === 0) {
+                            Toast.warning(`${file.name} 中未找到有效数据`);
+                            continue;
                         }
-                    });
-                    const after = HistoryManager.captureTablesState();
-                    const desc = sheets.length === 1
-                        ? '导入 Excel: ' + baseName
-                        : `导入 Excel: ${baseName}（${sheets.length} 个工作表）`;
-                    HistoryManager.push(HistoryManager.createTableAction(before, after, desc));
-                    renderTableList();
-                    renderGrid();
-                    window.dispatchEvent(new CustomEvent('tableschanged'));
+                        const fileBaseName = file.name.replace(/\.[^.]+$/, '');
+                        sheets.forEach((sheet) => {
+                            const tableName = sheets.length === 1
+                                ? generateUniqueTableName(fileBaseName)
+                                : generateUniqueTableName(`${fileBaseName} - ${sheet.sheetName}`);
+                            const table = createTable(tableName, sheet.headers, sheet.rows, 'xlsx');
+                            lastTableId = table.id;
+                            totalSheets++;
+                        });
+                        successNames.push(fileBaseName + (sheets.length > 1 ? `（${sheets.length} 个表）` : ''));
+                    } catch (err) {
+                        errors.push(`${file.name}: ${err.message}`);
+                    }
+                }
+
+                if (lastTableId) {
+                    activeTableId = lastTableId;
+                    AppState.activeTableId = lastTableId;
+                }
+
+                const after = HistoryManager.captureTablesState();
+                const desc = successNames.length === 1 && totalSheets === 1
+                    ? '导入 Excel: ' + successNames[0]
+                    : `批量导入 Excel（${successNames.length} 个文件，共 ${totalSheets} 个工作表）`;
+                HistoryManager.push(HistoryManager.createTableAction(before, after, desc));
+                renderTableList();
+                renderGrid();
+                window.dispatchEvent(new CustomEvent('tableschanged'));
+
+                if (successNames.length > 0) {
                     Toast.success(desc);
-                } catch (err) {
-                    Toast.error('Excel 解析失败: ' + err.message);
+                }
+                if (errors.length > 0) {
+                    Toast.error('部分文件导入失败:\n' + errors.join('\n'));
                 }
             };
             input.click();

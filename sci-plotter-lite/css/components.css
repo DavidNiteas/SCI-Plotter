@@ -18,6 +18,127 @@
     white-space: nowrap;
 }
 
+/* 手机布局组件适配 */
+.mobile-layout .template-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.mobile-layout .tool-grid {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.mobile-layout .panel-group {
+    padding: 8px;
+    gap: 8px;
+}
+
+.mobile-layout .panel-header {
+    padding: 8px 12px;
+}
+
+.mobile-layout .panel-body {
+    padding: 10px;
+}
+
+.mobile-layout .form-row {
+    margin-bottom: 8px;
+}
+
+.mobile-layout .form-input,
+.mobile-layout .form-select {
+    padding: 6px 8px;
+    font-size: 13px;
+}
+
+.mobile-layout .data-grid th,
+.mobile-layout .data-grid td {
+    padding: 4px 6px;
+    font-size: 12px;
+}
+
+.mobile-layout .data-grid th:first-child,
+.mobile-layout .data-grid td:first-child {
+    min-width: 32px;
+    max-width: 32px;
+}
+
+.mobile-layout .column-checklist {
+    max-height: 120px;
+}
+
+.mobile-layout .layer-list,
+.mobile-layout .snapshot-list {
+    max-height: 120px;
+}
+
+.mobile-layout .snapshot-thumb {
+    height: 60px;
+}
+
+.mobile-layout .find-replace-dialog {
+    width: calc(100vw - 32px);
+    max-width: 420px;
+    right: 16px;
+    left: 16px;
+    margin: 0 auto;
+}
+
+.mobile-layout .float-toolbar {
+    left: 8px !important;
+    right: 8px !important;
+    top: auto !important;
+    bottom: calc(var(--dock-height) + 8px);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.mobile-layout .stat-result-area {
+    max-height: 200px;
+}
+
+.mobile-layout .modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+}
+
+.mobile-layout .modal-panel {
+    max-width: 100%;
+    max-height: calc(100vh - 24px);
+}
+
+.mobile-layout .modal-header {
+    padding: 12px 16px;
+}
+
+.mobile-layout .modal-header h3 {
+    font-size: 14px;
+}
+
+.mobile-layout .modal-body {
+    padding: 12px 16px;
+}
+
+.mobile-layout .modal-footer {
+    padding: 10px 16px;
+}
+
+.mobile-layout .palette-colors-grid {
+    gap: 6px;
+}
+
+.mobile-layout .palette-color-item input[type="color"] {
+    width: 32px;
+    height: 32px;
+}
+
+.mobile-layout .aux-color-row {
+    gap: 12px;
+}
+
+.mobile-layout .prop-grid {
+    grid-template-columns: 1fr;
+}
+
 .btn:hover {
     background: var(--bg-hover);
     border-color: var(--border-focus);

@@ -191,7 +191,7 @@ SCI-Plotter/
 - `subfigure` — 子图编辑器的当前数据表、模板、ECharts 实例、样式、绘图形状
 - `mainfigure` — 主图画布的 Fabric.js 实例、尺寸、背景色、图层数组
 - `snapshots[]` — 全局快照库（暂存子图），支持版本控制
-- `version` — 前端版本字符串 `'1.1.0'`
+- `version` — 前端版本字符串 `1.1.0`
 
 该文件同时提供一组全局函数：`generateId`, `createTable`, `deleteTable`, `getTable`, `renameTable`, `updateTableData`, `createSnapshot`, `deleteSnapshot`, `exportAllTables`, `importAllTables`, `exportWorkspace`, `importWorkspace`, `exportEditableFigure`, `importEditableFigure`。
 
@@ -240,7 +240,7 @@ SCI-Plotter/
 - **直接调用全局对象**：如 `DataManager?.renderTableList()`、`SubfigureEditor?.refreshChart()`
 - **`CustomEvent` 事件**（在 `window` 上派发）：
   - `tableschanged` — 数据表增删改后广播，触发各页面下拉框刷新
-  - `addsubfigure` — 子图编辑器点击“发送到主图”时触发，主图画布监听并添加图片对象
+  - `addsubfigure` — 子图编辑器点击"发送到主图"时触发，主图画布监听并添加图片对象
   - `pagechange` — Dock 切换页面时广播
   - `historychange` — 撤销/重做状态变化时广播
 - **可选链调用**：模块间普遍使用 `?.` 避免初始化顺序问题
@@ -270,6 +270,10 @@ SCI-Plotter/
 | `backend/export.py` | matplotlib 矢量图导出（SVG/PDF）、reportlab PDF 报告生成 |
 | `backend/io_ops.py` | `safe_path` 路径越界校验（防止路径遍历）、`ensure_dir` 目录创建 |
 | `backend/plugins.py` | 动态发现与加载 `~/.sci-plotter/plugins/*.py` 插件 |
+
+### 7. 前端统计引擎（`js/analysis.js`）
+
+`analysis.js` 是一个纯 JavaScript 实现的统计计算库，覆盖后端 `analysis.py` 的全部 12 种分析方法。当 Desktop 版的后端分析调用失败时，`SciPloterBridge.analyze()` 会自动回退到该 JS 引擎。Lite 版则完全依赖此引擎提供基础统计分析能力。
 
 ---
 
@@ -428,7 +432,7 @@ pixi run format          # ruff format sci-plotter/src sci-plotter/tests
 2. 在分析工作台选择列、排序、处理缺失值、添加计算列、生成新表。
 3. 在子图编辑页切换 18 种模板，调整配色、字体、字号。
 4. 使用绘图工具在子图上添加形状/文本/显著性标记。
-5. 点击“暂存当前子图”与“发送到主图”。
+5. 点击"暂存当前子图"与"发送到主图"。
 6. 在主图排版页拖拽暂存子图到画布，添加文本/形状，调整图层、对齐、自动编号。
 7. 测试导出：工作区 JSON、可编辑图文件 `.spf`、PNG/JPEG 图片。
 8. 测试快捷键：`Ctrl+S` 保存工作区，`Ctrl+E` 导出图片，`Ctrl+Z/Y` 撤销/重做，`Delete` 删除主画布选中对象。
@@ -454,6 +458,6 @@ pixi run format          # ruff format sci-plotter/src sci-plotter/tests
 - **新增图表模板**时，在 `ChartTemplates` 对象中添加方法，并在 `index.html` 的模板网格中增加对应按钮。
 - **新增配色方案**时，在 `ColorSchemes` 对象中添加定义，并在 `index.html` 的 `<select id="color-scheme">` 中增加选项。
 - **若修改状态结构**，务必同步更新 `exportWorkspace()` / `importWorkspace()` 以及 `exportEditableFigure()` / `importEditableFigure()`，避免保存/加载时数据丢失。
-- **不要引入需要构建工具的依赖**（如 npm 包、webpack、vite），保持项目的“零构建”特性；若必须引入新库，优先通过 CDN 在 `index.html` 中加载。
+- **不要引入需要构建工具的依赖**（如 npm 包、webpack、vite），保持项目的"零构建"特性；若必须引入新库，优先通过 CDN 在 `index.html` 中加载。
 - **不要假设 GitHub Actions 工作流已存在**：当前项目根目录没有 `.github/workflows/`，若需添加 CI/CD 请从 scratch 创建。
 - **不要假设 Docker 配置已存在**：当前项目无任何容器化配置。
